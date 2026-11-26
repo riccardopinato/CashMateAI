@@ -124,7 +124,7 @@ fun LoginScreen(
                 )
 
                 Text(
-                    text = "Bentornato su CashMate. Accedi per gestire i tuoi risparmi.",
+                    text = "Recupero sicuro: usa la modalità locale. Google ed email sono temporaneamente disabilitati.",
                     fontSize = 14.sp,
                     color = TextSecondary,
                     textAlign = TextAlign.Center,
@@ -244,12 +244,12 @@ fun LoginScreen(
                         .fillMaxWidth()
                         .height(52.dp)
                         .testTag("login_submit_button"),
-                    enabled = !isLoading
+                    enabled = false // Account cloud sospesi finché l’isolamento v6 per UID non è verificato
                 ) {
                     if (isLoading) {
                         CircularProgressIndicator(color = Color.Black, modifier = Modifier.size(24.dp))
                     } else {
-                        Text("Accedi", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color.Black)
+                        Text("Email non disponibile", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color.Black)
                     }
                 }
 
@@ -267,7 +267,7 @@ fun LoginScreen(
                         .fillMaxWidth()
                         .height(52.dp)
                         .testTag("google_login_button"),
-                    enabled = !isLoading,
+                    enabled = false // Account cloud sospesi finché l’isolamento v6 per UID non è verificato,
                     colors = ButtonDefaults.outlinedButtonColors(containerColor = Color.White.copy(alpha = 0.03f))
                 ) {
                     Row(
@@ -281,7 +281,7 @@ fun LoginScreen(
                             color = Color(0xFF00E676)
                         )
                         Text(
-                            text = "Accedi con Google",
+                            text = "Google non disponibile",
                             color = Color.White,
                             fontSize = 14.sp,
                             fontWeight = FontWeight.Bold
@@ -428,7 +428,7 @@ fun RegisterScreen(
                 )
 
                 Text(
-                    text = "Crea un account per sbloccare la gestione delle spese con l'IA.",
+                    text = "I nuovi account online sono temporaneamente sospesi. Usa la modalità locale senza inviare dati.",
                     fontSize = 14.sp,
                     color = TextSecondary,
                     textAlign = TextAlign.Center,
@@ -580,12 +580,12 @@ fun RegisterScreen(
                         .fillMaxWidth()
                         .height(52.dp)
                         .testTag("register_submit_button"),
-                    enabled = !isLoading
+                    enabled = false // Account cloud sospesi finché l’isolamento v6 per UID non è verificato
                 ) {
                     if (isLoading) {
                         CircularProgressIndicator(color = Color.Black, modifier = Modifier.size(24.dp))
                     } else {
-                        Text("Registrati", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color.Black)
+                        Text("Registrazione sospesa", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color.Black)
                     }
                 }
 
@@ -603,7 +603,7 @@ fun RegisterScreen(
                         .fillMaxWidth()
                         .height(52.dp)
                         .testTag("google_register_button"),
-                    enabled = !isLoading,
+                    enabled = false // Account cloud sospesi finché l’isolamento v6 per UID non è verificato,
                     colors = ButtonDefaults.outlinedButtonColors(containerColor = Color.White.copy(alpha = 0.03f))
                 ) {
                     Row(
@@ -617,7 +617,7 @@ fun RegisterScreen(
                             color = Color(0xFF00E676)
                         )
                         Text(
-                            text = "Accedi con Google",
+                            text = "Google non disponibile",
                             color = Color.White,
                             fontSize = 14.sp,
                             fontWeight = FontWeight.Bold

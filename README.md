@@ -34,3 +34,12 @@ La firma di debug viene generata dagli strumenti Android e **non coincide necess
 - [Decision Studio #1](https://github.com/riccardopinato/CashMateAI/issues/1): proposta futura, **non implementata**.
 
 I dati dell'utente non sono stati importati. Mancano `google-services.json`, credenziali reali, chiave di firma storica e database/fixture precedenti necessari a dimostrare un aggiornamento senza perdita di dati.
+
+## Controlli di integrità aggiuntivi (26/11/2026)
+
+- Importi nuovi convertiti e verificati in **centesimi interi**, mantenendo per compatibilità il formato SQLite v6 originale (`REAL`). Importi non finiti o con più di due decimali vengono rifiutati.
+- Nuovi movimenti ammessi solo con ID nuovo, conto esistente e importo valido; nessuna sostituzione silenziosa tramite `INSERT OR REPLACE`.
+- Eliminazione di un singolo lato di un trasferimento rifiutata; saldi e movimenti sono aggiornati in modo atomico.
+- Accesso cloud email/Google, sincronizzazione, backup/ripristino cloud e Premium sospesi senza false conferme.
+- Il backup automatico Android è disattivato; **i dati locali non sono attualmente protetti da un meccanismo di esportazione certificato**: non utilizzare l'app come unico archivio finanziario.
+- Le migrazioni da database con `user_version < 6` non sono state validate perché mancano schemi storici e APK firmato originale. L'app non deve cancellare automaticamente le tabelle per aggiornarsi.

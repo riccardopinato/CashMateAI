@@ -20,41 +20,19 @@ class FirebaseAuthService(private val context: Context) {
     private val firestoreService = FirestoreService()
 
     init {
-        try {
-            auth = FirebaseAuth.getInstance()
-            auth?.addAuthStateListener { firebaseAuth ->
-                val fbUser = firebaseAuth.currentUser
-                if (fbUser != null) {
-                    val profile = UserProfile(
-                        id = fbUser.uid,
-                        displayName = fbUser.displayName ?: fbUser.email?.substringBefore("@")?.replaceFirstChar { it.uppercase() } ?: "Utente CashMate",
-                        email = fbUser.email ?: "",
-                        photoUrl = fbUser.photoUrl?.toString(),
-                        provider = fbUser.providerData.firstOrNull()?.providerId ?: "email",
-                        createdAt = fbUser.metadata?.creationTimestamp ?: System.currentTimeMillis(),
-                        updatedAt = System.currentTimeMillis(),
-                        premiumPlan = "FREE", // default
-                        currency = "€",
-                        language = "it",
-                        isOnboardingCompleted = false,
-                        isPremium = false
-                    )
-                    _currentUser.value = profile
-                } else {
-                    val currentProvider = _currentUser.value?.provider
-                    if (currentProvider != "local") {
-                        _currentUser.value = null
-                    }
-                }
-            }
-        } catch (e: Exception) {
-            Log.e("FirebaseAuthService", "Firebase initialization failed - falling back to offline", e)
-            // No silent login or fabricated account on startup.
-            _currentUser.value = null
-        }
+        // Recovery mode: never auto-load cloud identities over a device-local ledger.
+        // The v6 Room database is device-scoped, not partitioned by Firebase UID.
+        _currentUser.value = null
     }
 
     suspend fun login(email: String, password: String): Result<UserProfile> {
+        return Result.failure(IllegalStateException(
+            "Accesso cloud sospeso: isolamento dei dati finanziari per account non ancora verificato"
+        ))
+    }
+
+    /** Historical Firebase implementation is intentionally unreachable during recovery. */
+    private suspend fun historicalLogin(email: String, password: String): Result<UserProfile> {
         val firebaseAuth = auth ?: return Result.failure(Exception("Servizio Firebase non disponibile."))
         return try {
             val result = firebaseAuth.signInWithEmailAndPassword(email, password).await()
@@ -109,6 +87,13 @@ class FirebaseAuthService(private val context: Context) {
     }
 
     suspend fun register(email: String, displayName: String, password: String): Result<UserProfile> {
+        return Result.failure(IllegalStateException(
+            "Accesso cloud sospeso: isolamento dei dati finanziari per account non ancora verificato"
+        ))
+    }
+
+    /** Historical Firebase implementation is intentionally unreachable during recovery. */
+    private suspend fun historicalRegister(email: String, displayName: String, password: String): Result<UserProfile> {
         val firebaseAuth = auth ?: return Result.failure(Exception("Servizio Firebase non disponibile."))
         return try {
             val result = firebaseAuth.createUserWithEmailAndPassword(email, password).await()
@@ -142,6 +127,13 @@ class FirebaseAuthService(private val context: Context) {
     }
 
     suspend fun loginWithGoogleCredential(credential: AuthCredential): Result<UserProfile> {
+        return Result.failure(IllegalStateException(
+            "Accesso cloud sospeso: isolamento dei dati finanziari per account non ancora verificato"
+        ))
+    }
+
+    /** Historical Firebase implementation is intentionally unreachable during recovery. */
+    private suspend fun historicalLoginWithGoogleCredential(credential: AuthCredential): Result<UserProfile> {
         val firebaseAuth = auth ?: return Result.failure(Exception("Servizio Firebase non disponibile."))
         return try {
             val result = firebaseAuth.signInWithCredential(credential).await()

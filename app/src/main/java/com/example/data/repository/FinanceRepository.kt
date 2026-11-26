@@ -9,6 +9,7 @@ import androidx.room.withTransaction
 import com.example.data.local.UserSettingsStore
 import com.example.data.remote.FirebaseAuthService
 import com.example.domain.model.*
+import com.example.domain.model.MoneyAmount
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 
@@ -33,13 +34,17 @@ class FinanceRepository(
     suspend fun insertTransaction(transaction: Transaction) {
         val id = transaction.accountId
         require(id != null && id > 0) { "Seleziona un conto reale prima di salvare il movimento" }
-        require(transaction.amount.isFinite() && transaction.amount > 0.0) { "Importo non valido" }
+        require(transaction.id == 0) { "Un movimento esistente non può essere inserito nuovamente: usare una modifica verificata" }
+        val amountCents = MoneyAmount.cents(transaction.amount)
+        require(amountCents > 0L) { "Importo non valido" }
         database.withTransaction {
             val account = requireNotNull(accountDao.getAccountByIdSync(id)) { "Conto inesistente" }
-            transactionDao.insertTransaction(transaction)
-            val delta = if (transaction.type == TransactionType.INCOME) transaction.amount else -transaction.amount
+            val deltaCents = if (transaction.type == TransactionType.INCOME) amountCents else -amountCents
+            val newBalance = MoneyAmount.applyDelta(account.saldo, deltaCents)
+            // An existing ID is not a new expense. All changes commit or roll back together.
+            transactionDao.insertTransaction(transaction.copy(amount = MoneyAmount.euros(amountCents)))
             accountDao.updateAccount(account.copy(
-                saldo = account.saldo + delta, aggiornatoIl = System.currentTimeMillis()
+                saldo = newBalance, aggiornatoIl = System.currentTimeMillis()
             ))
         }
     }
@@ -47,13 +52,18 @@ class FinanceRepository(
     suspend fun deleteTransaction(id: Int) {
         database.withTransaction {
             val tx = transactionDao.getTransactionByIdSync(id) ?: return@withTransaction
-            val account = tx.accountId?.let { accountDao.getAccountByIdSync(it) }
-            if (account != null) {
-                val reversal = if (tx.type == TransactionType.INCOME) -tx.amount else tx.amount
-                accountDao.updateAccount(account.copy(
-                    saldo = account.saldo + reversal, aggiornatoIl = System.currentTimeMillis()
-                ))
+            require(tx.paymentMethod != "Transfer") {
+                "Questa voce appartiene a un trasferimento: eliminare una sola metà renderebbe i saldi incoerenti"
             }
+            val account = requireNotNull(tx.accountId?.let { accountDao.getAccountByIdSync(it) }) {
+                "Movimento storico senza conto valido: richiede riconciliazione prima dell'eliminazione"
+            }
+            val amountCents = MoneyAmount.cents(tx.amount)
+            val reversalCents = if (tx.type == TransactionType.INCOME) -amountCents else amountCents
+            val newBalance = MoneyAmount.applyDelta(account.saldo, reversalCents)
+            accountDao.updateAccount(account.copy(
+                saldo = newBalance, aggiornatoIl = System.currentTimeMillis()
+            ))
             transactionDao.deleteTransactionById(id)
         }
     }

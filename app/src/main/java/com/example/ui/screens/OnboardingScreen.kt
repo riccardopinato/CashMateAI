@@ -58,7 +58,7 @@ fun OnboardingScreen(
             ),
             OnboardingPageData(
                 title = "Lascia lavorare l'AI",
-                subtitle = "Ricevi consigli personalizzati per risparmiare e migliorare le tue abitudini."
+                subtitle = "Le funzioni AI sono sospese in questa versione di recupero. Tieni sotto controllo i tuoi dati sul dispositivo."
             ),
             OnboardingPageData(
                 title = "Raggiungi i tuoi obiettivi",

@@ -29,3 +29,10 @@ This source snapshot is for auditable recovery. **Do not merge into main until C
 - Eliminato l'onboarding con conti/saldi fittizi e la riassegnazione automatica dei movimenti orfani. Nuove entrate/uscite, eliminazioni e trasferimenti gestiscono saldo e scrittura in una singola transazione Room. Conti con movimenti non cancellabili automaticamente.
 
 - Rimossa la creazione automatica di budget di esempio. Le opzioni UI senza backend reale (tema, notifiche, biometria, cloud) sono contrassegnate come non configurate e disattivate.
+
+## Ulteriore audit integrità (26/11/2026)
+- Corrette operazioni contabili per evitare duplicazioni e drift: conversione verificata dei nuovi importi in centesimi, inserimenti che falliscono su ID esistente, saldo in transazione, trasferimenti non cancellabili per singola metà, rifiuto di conti senza riferimento.
+- Accesso cloud sospeso alla sorgente, oltre che dalla UI: la base Room storica è device-scoped, **non** separata per Firebase UID.
+- SyncManager e BackupRestoreManager hanno guardie di blocco anche per chiamate dirette; nessun upload/restore dovrà partire durante la fase di recupero.
+- Auto Backup Android temporaneamente disabilitato perché la protezione degli archivi finanziari non è stata verificata. Non equivale a backup manuale disponibile.
+- Test aggiuntivi su importi, rollback, duplicate ID e trasferimenti. Nessun test può simulare legittimamente la **firma APK storica** o una migrazione v1-v5 senza i relativi artefatti.

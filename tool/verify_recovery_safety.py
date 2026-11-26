@@ -59,3 +59,14 @@ for f in ROOT.rglob('*'):
         assert re.search(r'[\w.+-]+@(?:gmail|outlook|yahoo)\.(?:com|it)\b', text, re.I) is None, f
 assert 'clearAllTransactions()' not in source('app/src/main/java/com/example/data/remote/BackupRestoreManager.kt')
 print('PASS: original identity, Room safety, billing/auth/AI guards and cloud writes suspended')
+
+# Additional recovery guards: no free financial facts or auth silently rewritten.
+assert 'OnConflictStrategy.ABORT' in source('app/src/main/java/com/example/data/local/Daos.kt')
+assert 'MoneyAmount.cents' in source('app/src/main/java/com/example/data/repository/FinanceRepository.kt')
+assert 'transaction.id == 0' in source('app/src/main/java/com/example/data/repository/FinanceRepository.kt')
+assert 'paymentMethod != "Transfer"' in source('app/src/main/java/com/example/data/repository/FinanceRepository.kt')
+assert 'android:allowBackup="false"' in source('app/src/main/AndroidManifest.xml')
+assert 'suspend fun syncPending(userId: String)' in source('app/src/main/java/com/example/data/remote/SyncManager.kt')
+assert 'Sincronizzazione cloud disabilitata' in source('app/src/main/java/com/example/data/remote/SyncManager.kt')
+assert 'Backup cloud non disponibile' in source('app/src/main/java/com/example/data/remote/BackupRestoreManager.kt')
+assert 'Accesso cloud sospeso:' in source('app/src/main/java/com/example/data/remote/FirebaseServices.kt')

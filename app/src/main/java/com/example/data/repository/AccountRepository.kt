@@ -5,6 +5,7 @@ import com.example.data.local.TransactionDao
 import com.example.domain.model.Account
 import com.example.domain.model.Transaction
 import com.example.domain.model.TransactionType
+import com.example.domain.model.MoneyAmount
 import kotlinx.coroutines.flow.Flow
 import androidx.room.withTransaction
 import com.example.data.local.AppDatabase
@@ -21,11 +22,20 @@ class AccountRepository(
     }
 
     suspend fun insertAccount(account: Account): Long {
-        return accountDao.insertAccount(account)
+        require(account.id == 0) { "Non sovrascrivere un conto esistente" }
+        require(account.nome.isNotBlank()) { "Il conto deve avere un nome" }
+        val startingCents = MoneyAmount.cents(account.saldo)
+        return accountDao.insertAccount(account.copy(saldo = MoneyAmount.euros(startingCents)))
     }
 
     suspend fun updateAccount(account: Account) {
-        accountDao.updateAccount(account)
+        database.withTransaction {
+            val existing = requireNotNull(accountDao.getAccountByIdSync(account.id)) { "Conto inesistente" }
+            require(MoneyAmount.cents(existing.saldo) == MoneyAmount.cents(account.saldo)) {
+                "Il saldo non può essere modificato direttamente senza una registrazione contabile"
+            }
+            accountDao.updateAccount(account.copy(saldo = existing.saldo))
+        }
     }
 
     suspend fun deleteAccount(id: Int) {
@@ -41,21 +51,26 @@ class AccountRepository(
         require(fromAccountId > 0 && toAccountId > 0 && fromAccountId != toAccountId) {
             "Seleziona due conti reali distinti"
         }
-        require(amount.isFinite() && amount > 0.0) { "Importo trasferimento non valido" }
+        val amountCents = MoneyAmount.cents(amount)
+        require(amountCents > 0L) { "Importo trasferimento non valido" }
         database.withTransaction {
             val from = requireNotNull(accountDao.getAccountByIdSync(fromAccountId)) { "Conto origine inesistente" }
             val to = requireNotNull(accountDao.getAccountByIdSync(toAccountId)) { "Conto destinazione inesistente" }
-            require(from.saldo >= amount) { "Saldo insufficiente per il trasferimento" }
+            val fromCents = MoneyAmount.cents(from.saldo)
+            require(fromCents >= amountCents) { "Saldo insufficiente per il trasferimento" }
+            val newFromBalance = MoneyAmount.euros(Math.subtractExact(fromCents, amountCents))
+            val newToBalance = MoneyAmount.applyDelta(to.saldo, amountCents)
             val now = System.currentTimeMillis()
-            accountDao.updateAccount(from.copy(saldo = from.saldo - amount, aggiornatoIl = now))
-            accountDao.updateAccount(to.copy(saldo = to.saldo + amount, aggiornatoIl = now))
+            accountDao.updateAccount(from.copy(saldo = newFromBalance, aggiornatoIl = now))
+            accountDao.updateAccount(to.copy(saldo = newToBalance, aggiornatoIl = now))
+            val canonicalAmount = MoneyAmount.euros(amountCents)
             transactionDao.insertTransaction(
-                Transaction(amount = amount, type = TransactionType.EXPENSE,
+                Transaction(amount = canonicalAmount, type = TransactionType.EXPENSE,
                     category = "Other", dateMillis = now, note = "Trasferimento a ${to.nome}",
                     paymentMethod = "Transfer", accountId = fromAccountId)
             )
             transactionDao.insertTransaction(
-                Transaction(amount = amount, type = TransactionType.INCOME,
+                Transaction(amount = canonicalAmount, type = TransactionType.INCOME,
                     category = "Other", dateMillis = now, note = "Trasferimento da ${from.nome}",
                     paymentMethod = "Transfer", accountId = toAccountId)
             )

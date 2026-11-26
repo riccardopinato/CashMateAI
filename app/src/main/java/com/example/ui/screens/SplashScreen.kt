@@ -124,7 +124,7 @@ fun SplashScreen(
             Spacer(modifier = Modifier.height(8.dp))
 
             Text(
-                text = "IL TUO ASSISTENTE FINANZIARIO INTELLIGENTE",
+                text = "GESTIONE FINANZIARIA LOCALE",
                 fontSize = 10.sp,
                 fontWeight = FontWeight.Bold,
                 color = EmeraldPrimary,

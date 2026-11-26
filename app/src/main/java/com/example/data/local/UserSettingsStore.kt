@@ -26,9 +26,8 @@ class UserSettingsStore(private val context: Context) {
         preferences[CURRENCY] ?: "€"
     }
 
-    val autoSyncEnabled: Flow<Boolean> = context.dataStore.data.map { preferences ->
-        preferences[AUTO_SYNC_ENABLED] ?: true
-    }
+    // Fail-closed: migration/sync are not validated; retain legacy preference without acting on it.
+    val autoSyncEnabled: Flow<Boolean> = context.dataStore.data.map { false }
 
     val lastBackupTimestamp: Flow<Long> = context.dataStore.data.map { preferences ->
         preferences[LAST_BACKUP_TIMESTAMP] ?: 0L

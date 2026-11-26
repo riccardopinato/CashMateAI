@@ -14,6 +14,11 @@ class SyncManager(
 ) {
 
     suspend fun syncPending(userId: String) {
+        throw IllegalStateException("Sincronizzazione cloud sospesa fino al collaudo del ripristino non distruttivo")
+    }
+
+    /** Historical implementation kept for recovery audit only, not for runtime use. */
+    private suspend fun historicalSyncPending(userId: String) {
         if (!connectivityObserver.isConnected()) {
             Log.d("SyncManager", "Skipping pending sync: Offline")
             return
@@ -198,7 +203,12 @@ class SyncManager(
         }
     }
 
-    suspend fun syncAllBidirectional(userId: String): Result<Unit> {
+    suspend fun syncAllBidirectional(userId: String): Result<Unit> = Result.failure(
+        IllegalStateException("Sincronizzazione cloud disabilitata: nessun dato è stato trasmesso")
+    )
+
+    /** Historical implementation kept for recovery audit only, not for runtime use. */
+    private suspend fun historicalSyncAllBidirectional(userId: String): Result<Unit> {
         if (!connectivityObserver.isConnected()) {
             return Result.failure(Exception("Rete assente."))
         }

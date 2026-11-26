@@ -20,7 +20,8 @@ class BackupRestoreManager(
     val lastBackupTimestamp: Flow<Long> = userSettingsStore.lastBackupTimestamp
 
     suspend fun setAutoSyncEnabled(enabled: Boolean) {
-        userSettingsStore.setAutoSync(enabled)
+        // Never allow callers to opt in to an unverified, non-atomic cloud sync.
+        userSettingsStore.setAutoSync(false)
     }
 
     suspend fun setLastBackupTimestamp(timestamp: Long) {
@@ -29,6 +30,10 @@ class BackupRestoreManager(
 
     // Forces a full upload of all local records to Firestore
     suspend fun backupNow(userId: String): Result<Unit> {
+        return Result.failure(IllegalStateException(
+            "Backup cloud non disponibile: ripristino non ancora certificato. Nessun dato trasmesso."
+        ))
+        /* Legacy uploader retained for audit only; MUST NOT execute.
         return try {
             // 1. Transactions
             val transactions = database.transactionDao().getAllTransactions().first()
@@ -129,6 +134,7 @@ class BackupRestoreManager(
             Log.e("BackupRestoreManager", "Backup failed", e)
             Result.failure(e)
         }
+        */
     }
 
     /**

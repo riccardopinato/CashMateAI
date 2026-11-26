@@ -16,7 +16,7 @@ interface TransactionDao {
     @Query("SELECT * FROM transactions ORDER BY dateMillis DESC")
     fun getAllTransactions(): Flow<List<Transaction>>
 
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    @Insert(onConflict = OnConflictStrategy.ABORT)
     suspend fun insertTransaction(transaction: Transaction)
 
     @Query("SELECT * FROM transactions WHERE id = :id LIMIT 1")
@@ -109,7 +109,7 @@ interface AccountDao {
     @Query("SELECT * FROM accounts WHERE id = :id")
     suspend fun getAccountByIdSync(id: Int): Account?
 
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    @Insert(onConflict = OnConflictStrategy.ABORT)
     suspend fun insertAccount(account: Account): Long
 
     @Update
