@@ -23,3 +23,5 @@ This source snapshot is for auditable recovery. **Do not merge into main until C
 - AI Coach fails explicitly when API key/provider response is missing and cannot return simulated financial advice.
 - Premium remains FREE pending a verified billing provider, regardless of earlier in-app demo flags; old settings are preserved, not treated as purchases.
 - Product release still blocked on migration tests from real old APK and verified Firebase/Play billing configurations.
+
+- **Ulteriore blocco prudenziale:** backup, ripristino e sync cloud sono temporaneamente disabilitati. Il ripristino precedente cancellava tabelle locali prima di acquisire tutte le collezioni remote. Conservati i sorgenti storici nel commit iniziale della PR, ma nessuna funzione cloud va presentata come attiva.

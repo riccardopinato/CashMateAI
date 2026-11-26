@@ -108,7 +108,7 @@ class FinanceViewModel(application: Application) : AndroidViewModel(application)
         isAutoSyncEnabled = repository.isAutoSyncEnabled.stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5000),
-            initialValue = true
+            initialValue = false
         )
 
         lastBackupTimestamp = repository.lastBackupTimestamp.stateIn(
@@ -123,17 +123,8 @@ class FinanceViewModel(application: Application) : AndroidViewModel(application)
             initialValue = com.example.data.remote.ConnectivityObserver.Status.Available
         )
 
-        // Automatically sync when online and auto-sync is enabled
-        viewModelScope.launch {
-            combine(currentUser, connectivityStatus, isAutoSyncEnabled) { user, status, autoSync ->
-                Triple(user, status, autoSync)
-            }.collect { (user, status, autoSync) ->
-                if (user != null && user.provider != "local" && status == com.example.data.remote.ConnectivityObserver.Status.Available && autoSync) {
-                    android.util.Log.d("FinanceViewModel", "Device is online & Auto-sync is enabled - initiating bidirectional sync for: ${user.displayName}")
-                    repository.syncAllBidirectional(user.id)
-                }
-            }
-        }
+        // Recovery gate: intentionally no automatic Firebase writes until the
+        // non-destructive cloud merge/restore procedure has been certified.
 
         // Observe AI usage logs directly
         viewModelScope.launch {
@@ -211,9 +202,10 @@ class FinanceViewModel(application: Application) : AndroidViewModel(application)
     }
 
     fun setAutoSyncEnabled(enabled: Boolean) {
-        viewModelScope.launch {
-            repository.setAutoSyncEnabled(enabled)
+        if (enabled) {
+            android.widget.Toast.makeText(getApplication(), "Sync cloud sospesa per proteggere i dati.", android.widget.Toast.LENGTH_LONG).show()
         }
+        viewModelScope.launch { repository.setAutoSyncEnabled(false) }
     }
 
     fun backupNow(onSuccess: () -> Unit, onError: (String) -> Unit) {
@@ -256,13 +248,7 @@ class FinanceViewModel(application: Application) : AndroidViewModel(application)
     }
 
     private fun autoSyncPending() {
-        val user = currentUser.value
-        if (user != null && user.provider != "local" && isAutoSyncEnabled.value) {
-            viewModelScope.launch {
-                runCatching { repository.syncManager?.syncPending(user.id) }
-                    .onFailure { android.util.Log.e("FinanceViewModel", "Pending sync failed", it) }
-            }
-        }
+        // Intentionally disabled during non-destructive legacy recovery.
     }
 
     // TRANSACTION ACTIONS

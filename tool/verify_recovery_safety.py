@@ -41,11 +41,14 @@ for file in ('SyncManager.kt', 'BackupRestoreManager.kt'):
     assert '.getOrThrow()' in content
 repo = source('app/src/main/java/com/example/data/repository/FinanceRepository.kt')
 assert 'getAccountByIdSync' in repo
-assert 'firebaseAuthService.isCloudSession(userId)' in repo
+assert 'Backup cloud sospeso' in repo
+assert 'Ripristino cloud sospeso' in repo
+assert 'Sincronizzazione cloud sospesa' in repo
 # Avoid storing account addresses in this public repository.
 import re
 for f in ROOT.rglob('*'):
     if f.is_file() and f.suffix in {'.kt', '.md', '.kts'}:
         text = f.read_text(encoding='utf-8', errors='replace')
         assert re.search(r'[\w.+-]+@(?:gmail|outlook|yahoo)\.(?:com|it)\b', text, re.I) is None, f
-print('PASS: historical identity, Room safety, no simulated logins/AI/billing and cloud gates')
+assert 'clearAllTransactions()' not in source('app/src/main/java/com/example/data/remote/BackupRestoreManager.kt')
+print('PASS: original identity, Room safety, billing/auth/AI guards and cloud writes suspended')

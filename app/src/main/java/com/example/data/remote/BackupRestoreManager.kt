@@ -131,120 +131,12 @@ class BackupRestoreManager(
         }
     }
 
-    // Erases local DB and imports everything from Firestore
-    suspend fun restoreNow(userId: String): Result<Unit> {
-        return try {
-            // 1. Download and restore Transactions
-            val cloudTx = firestoreService.downloadCollection(userId, "transactions").getOrThrow()
-            database.transactionDao().clearAllTransactions()
-            cloudTx.forEach { raw ->
-                val tx = Transaction(
-                    id = (raw["id"] as? Number)?.toInt() ?: 0,
-                    amount = (raw["amount"] as? Number)?.toDouble() ?: 0.0,
-                    type = try { TransactionType.valueOf(raw["type"] as String) } catch (e: Exception) { TransactionType.EXPENSE },
-                    category = raw["category"] as? String ?: "Altro",
-                    dateMillis = (raw["dateMillis"] as? Number)?.toLong() ?: System.currentTimeMillis(),
-                    note = raw["note"] as? String ?: "",
-                    paymentMethod = raw["paymentMethod"] as? String ?: "Contanti",
-                    accountId = (raw["accountId"] as? Number)?.toInt(),
-                    userId = userId,
-                    createdAt = (raw["createdAt"] as? Number)?.toLong() ?: System.currentTimeMillis(),
-                    updatedAt = (raw["updatedAt"] as? Number)?.toLong() ?: System.currentTimeMillis(),
-                    deletedAt = (raw["deletedAt"] as? Number)?.toLong(),
-                    syncStatus = "SYNCED",
-                    lastSyncedAt = System.currentTimeMillis()
-                )
-                if (tx.deletedAt == null) {
-                    database.transactionDao().insertTransaction(tx)
-                }
-            }
-
-            // 2. Download and restore Accounts
-            val cloudAcc = firestoreService.downloadCollection(userId, "accounts").getOrThrow()
-            database.accountDao().clearAllAccounts()
-            cloudAcc.forEach { raw ->
-                val acc = Account(
-                    id = (raw["id"] as? Number)?.toInt() ?: 0,
-                    nome = raw["nome"] as? String ?: "Conto",
-                    tipo = raw["tipo"] as? String ?: "Conto Corrente",
-                    saldo = (raw["saldo"] as? Number)?.toDouble() ?: 0.0,
-                    colore = raw["colore"] as? String ?: "#00E676",
-                    icona = raw["icona"] as? String ?: "💳",
-                    ordine = (raw["ordine"] as? Number)?.toInt() ?: 0,
-                    visibile = raw["visibile"] as? Boolean ?: true,
-                    creatoIl = (raw["creatoIl"] as? Number)?.toLong() ?: System.currentTimeMillis(),
-                    aggiornatoIl = (raw["aggiornatoIl"] as? Number)?.toLong() ?: System.currentTimeMillis(),
-                    userId = userId,
-                    createdAt = (raw["createdAt"] as? Number)?.toLong() ?: System.currentTimeMillis(),
-                    updatedAt = (raw["updatedAt"] as? Number)?.toLong() ?: System.currentTimeMillis(),
-                    deletedAt = (raw["deletedAt"] as? Number)?.toLong(),
-                    syncStatus = "SYNCED",
-                    lastSyncedAt = System.currentTimeMillis()
-                )
-                if (acc.deletedAt == null) {
-                    database.accountDao().insertAccount(acc)
-                }
-            }
-
-            // 3. Download and restore Split Bills
-            val cloudBills = firestoreService.downloadCollection(userId, "splitBills").getOrThrow()
-            database.splitBillDao().getAllSplitBills().first().forEach { bill ->
-                database.splitBillDao().deleteSplitBillById(bill.id)
-            }
-            cloudBills.forEach { raw ->
-                val bill = SplitBill(
-                    id = (raw["id"] as? Number)?.toInt() ?: 0,
-                    title = raw["title"] as? String ?: "Spesa",
-                    totalAmount = (raw["totalAmount"] as? Number)?.toDouble() ?: 0.0,
-                    divisionType = raw["divisionType"] as? String ?: "EQUAL",
-                    dateMillis = (raw["dateMillis"] as? Number)?.toLong() ?: System.currentTimeMillis(),
-                    participantsJson = raw["participantsJson"] as? String ?: "[]",
-                    userId = userId,
-                    createdAt = (raw["createdAt"] as? Number)?.toLong() ?: System.currentTimeMillis(),
-                    updatedAt = (raw["updatedAt"] as? Number)?.toLong() ?: System.currentTimeMillis(),
-                    deletedAt = (raw["deletedAt"] as? Number)?.toLong(),
-                    syncStatus = "SYNCED",
-                    lastSyncedAt = System.currentTimeMillis()
-                )
-                if (bill.deletedAt == null) {
-                    database.splitBillDao().insertSplitBill(bill)
-                }
-            }
-
-            // 4. Download and restore Goals
-            val cloudGoals = firestoreService.downloadCollection(userId, "goals").getOrThrow()
-            database.savingsGoalDao().getAllSavingsGoals().first().forEach { goal ->
-                database.savingsGoalDao().deleteSavingsGoalById(goal.id)
-            }
-            cloudGoals.forEach { raw ->
-                val goal = SavingsGoal(
-                    id = (raw["id"] as? Number)?.toInt() ?: 0,
-                    name = raw["name"] as? String ?: "Obiettivo",
-                    targetAmount = (raw["targetAmount"] as? Number)?.toDouble() ?: 100.0,
-                    currentAmount = (raw["currentAmount"] as? Number)?.toDouble() ?: 0.0,
-                    emoji = raw["emoji"] as? String ?: "🎯",
-                    targetDateMillis = (raw["targetDateMillis"] as? Number)?.toLong(),
-                    createdAtMillis = (raw["createdAtMillis"] as? Number)?.toLong() ?: System.currentTimeMillis(),
-                    description = raw["description"] as? String ?: "",
-                    status = raw["status"] as? String ?: "ACTIVE",
-                    color = raw["color"] as? String ?: "#00E676",
-                    notes = raw["notes"] as? String ?: "",
-                    userId = userId,
-                    createdAt = (raw["createdAt"] as? Number)?.toLong() ?: System.currentTimeMillis(),
-                    updatedAt = (raw["updatedAt"] as? Number)?.toLong() ?: System.currentTimeMillis(),
-                    deletedAt = (raw["deletedAt"] as? Number)?.toLong(),
-                    syncStatus = "SYNCED",
-                    lastSyncedAt = System.currentTimeMillis()
-                )
-                if (goal.deletedAt == null) {
-                    database.savingsGoalDao().insertSavingsGoal(goal)
-                }
-            }
-
-            Result.success(Unit)
-        } catch (e: Exception) {
-            Log.e("BackupRestoreManager", "Restore failed", e)
-            Result.failure(e)
-        }
-    }
+    /**
+     * Disabled until all remote collections are validated and a rollback-safe
+     * transactional restore is implemented. Historical implementation cleared
+     * the local database before downloading every collection.
+     */
+    suspend fun restoreNow(userId: String): Result<Unit> = Result.failure(
+        IllegalStateException("Ripristino cloud non ancora sicuro: dati locali preservati.")
+    )
 }

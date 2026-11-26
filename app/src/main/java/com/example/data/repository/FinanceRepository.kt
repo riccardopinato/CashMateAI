@@ -107,28 +107,25 @@ class FinanceRepository(
         return firebaseAuthService.loginWithGoogleCredential(credential)
     }
 
-    val isAutoSyncEnabled: Flow<Boolean> = backupRestoreManager?.isAutoSyncEnabled ?: kotlinx.coroutines.flow.flowOf(true)
-    val lastBackupTimestamp: Flow<Long> = backupRestoreManager?.lastBackupTimestamp ?: kotlinx.coroutines.flow.flowOf(0L)
+    // Recovery gate: old cloud sync/restore flows lack atomicity and could overwrite local records.
+    // Keep source algorithms for review, but do not expose them as active capabilities.
+    val isAutoSyncEnabled: Flow<Boolean> = kotlinx.coroutines.flow.flowOf(false)
+    val lastBackupTimestamp: Flow<Long> = backupRestoreManager?.lastBackupTimestamp
+        ?: kotlinx.coroutines.flow.flowOf(0L)
 
     suspend fun setAutoSyncEnabled(enabled: Boolean) {
-        backupRestoreManager?.setAutoSyncEnabled(enabled)
+        if (!enabled) backupRestoreManager?.setAutoSyncEnabled(false)
     }
 
-    suspend fun backupNow(userId: String): Result<Unit> {
-        if (!firebaseAuthService.isCloudSession(userId))
-            return Result.failure(IllegalStateException("Backup cloud richiede un account Firebase verificato."))
-        return backupRestoreManager?.backupNow(userId) ?: Result.failure(Exception("Backup manager non disponibile."))
-    }
+    suspend fun backupNow(userId: String): Result<Unit> = Result.failure(
+        IllegalStateException("Backup cloud sospeso: verifica sicurezza e ripristino non completata.")
+    )
 
-    suspend fun restoreNow(userId: String): Result<Unit> {
-        if (!firebaseAuthService.isCloudSession(userId))
-            return Result.failure(IllegalStateException("Ripristino cloud richiede un account Firebase verificato."))
-        return backupRestoreManager?.restoreNow(userId) ?: Result.failure(Exception("Restore manager non disponibile."))
-    }
+    suspend fun restoreNow(userId: String): Result<Unit> = Result.failure(
+        IllegalStateException("Ripristino cloud sospeso per proteggere i dati locali.")
+    )
 
-    suspend fun syncAllBidirectional(userId: String): Result<Unit> {
-        if (!firebaseAuthService.isCloudSession(userId))
-            return Result.failure(IllegalStateException("Sincronizzazione cloud richiede un account Firebase verificato."))
-        return syncManager?.syncAllBidirectional(userId) ?: Result.failure(Exception("Sync manager non disponibile."))
-    }
+    suspend fun syncAllBidirectional(userId: String): Result<Unit> = Result.failure(
+        IllegalStateException("Sincronizzazione cloud sospesa fino al collaudo con dati di test.")
+    )
 }
