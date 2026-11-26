@@ -42,12 +42,12 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '9.3.1'
-      - name: Test and build original CashMate
-        run: gradle :app:testDebugUnitTest :app:assembleDebug --stacktrace --no-daemon
-      - name: Attach test APK
-        if: success()
+      - name: Build and test original CashMate
+        run: gradle :app:assembleDebug :app:testDebugUnitTest --stacktrace --no-daemon
+      - name: Attach unverified debug APK even when tests fail
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: CashMate-original-debug-REQUIRES-DEVICE-QA
           path: app/build/outputs/apk/debug/*.apk
-          if-no-files-found: error
+          if-no-files-found: warn

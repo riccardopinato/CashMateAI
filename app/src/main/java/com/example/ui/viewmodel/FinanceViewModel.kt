@@ -134,16 +134,7 @@ class FinanceViewModel(application: Application) : AndroidViewModel(application)
             }
         }
 
-        // Seed initial budgets if empty
-        viewModelScope.launch {
-            repository.allBudgets.first().let { currentBudgets ->
-                if (currentBudgets.isEmpty()) {
-                    repository.insertBudget(Budget("Food", 200.0))
-                    repository.insertBudget(Budget("Shopping", 150.0))
-                    repository.insertBudget(Budget("Entertainment", 100.0))
-                }
-            }
-        }
+        // User-created budgets only; do not inject imaginary financial limits.
     }
 
     // AUTH ACTIONS

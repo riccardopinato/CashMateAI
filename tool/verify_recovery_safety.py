@@ -46,6 +46,8 @@ assert 'countTransactionsForAccount' in source('app/src/main/java/com/example/da
 assert 'saldo = 2500.0' not in source('app/src/main/java/com/example/ui/viewmodel/AccountViewModel.kt')
 assert 'Room.inMemoryDatabaseBuilder' in source('app/src/test/java/com/example/AccountRecoveryTest.kt')
 assert 'invalidAccounts.forEach' not in source('app/src/main/java/com/example/ui/viewmodel/AccountViewModel.kt')
+assert 'insertBudget(Budget("Food", 200.0))' not in source('app/src/main/java/com/example/ui/viewmodel/FinanceViewModel.kt')
+assert 'Servizi cloud temporaneamente sospesi' in source('app/src/main/java/com/example/ui/screens/SettingsScreen.kt')
 assert 'Backup cloud sospeso' in repo
 assert 'Ripristino cloud sospeso' in repo
 assert 'Sincronizzazione cloud sospesa' in repo

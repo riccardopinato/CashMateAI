@@ -62,7 +62,7 @@ fun SettingsScreen(
     var budgetAmountStr by remember { mutableStateOf("") }
     var showLogoutDialog by remember { mutableStateOf(false) }
 
-    // Mock states for premium settings switches / notifications
+    // Unimplemented switches are explicitly disabled, not advertised as active.
     var isDarkTheme by remember { mutableStateOf(true) }
     var isNotificationsEnabled by remember { mutableStateOf(true) }
     var isBiometricsEnabled by remember { mutableStateOf(false) }
@@ -527,12 +527,13 @@ fun SettingsScreen(
                     // Row 1: Tema (Switch inline)
                     SettingsItemRow(
                         icon = Icons.Default.DarkMode,
-                        title = "Tema Scuro (Amoled)",
-                        value = if (isDarkTheme) "Attivo" else "Disattivo",
+                        title = "Tema (in preparazione)",
+                        value = "Non configurato",
                         trailingContent = {
                             Switch(
-                                checked = isDarkTheme,
-                                onCheckedChange = { isDarkTheme = it },
+                                checked = false,
+                                onCheckedChange = {},
+                                enabled = false,
                                 colors = SwitchDefaults.colors(
                                     checkedThumbColor = Color.Black,
                                     checkedTrackColor = EmeraldPrimary,
@@ -574,11 +575,12 @@ fun SettingsScreen(
                     SettingsItemRow(
                         icon = Icons.Default.NotificationsActive,
                         title = "Notifiche Push",
-                        value = if (isNotificationsEnabled) "Abilitate" else "Silenziate",
+                        value = "Non configurate",
                         trailingContent = {
                             Switch(
-                                checked = isNotificationsEnabled,
-                                onCheckedChange = { isNotificationsEnabled = it },
+                                checked = false,
+                                onCheckedChange = {},
+                                enabled = false,
                                 colors = SwitchDefaults.colors(
                                     checkedThumbColor = Color.Black,
                                     checkedTrackColor = EmeraldPrimary,
@@ -704,7 +706,7 @@ fun SettingsScreen(
                             )
                             Column {
                                 Text(
-                                    text = if (isConnected) "Stato Cloud: Online" else "Stato Cloud: Offline",
+                                    text = "Servizi cloud temporaneamente sospesi",
                                     fontSize = 14.sp,
                                     fontWeight = FontWeight.Bold,
                                     color = Color.White
@@ -718,7 +720,7 @@ fun SettingsScreen(
                                     }
                                 }
                                 Text(
-                                    text = formattedBackupTime,
+                                    text = "I tuoi dati restano sul dispositivo fino al collaudo del ripristino.",
                                     fontSize = 11.sp,
                                     color = TextSecondary
                                 )
@@ -727,8 +729,9 @@ fun SettingsScreen(
 
                         // Auto-Sync Toggle
                         Switch(
-                            checked = isAutoSyncEnabled,
-                            onCheckedChange = { viewModel.setAutoSyncEnabled(it) },
+                            checked = false,
+                            onCheckedChange = {},
+                            enabled = false,
                             colors = SwitchDefaults.colors(
                                 checkedThumbColor = Color.Black,
                                 checkedTrackColor = EmeraldPrimary,
@@ -741,7 +744,7 @@ fun SettingsScreen(
 
                     Spacer(modifier = Modifier.height(6.dp))
                     Text(
-                        text = "Sincronizza in tempo reale le tue transazioni, obiettivi e budget con il cloud.",
+                        text = "Sincronizzazione, backup e ripristino non sono ancora disponibili in questa build di recupero.",
                         fontSize = 11.sp,
                         color = TextSecondary,
                         lineHeight = 15.sp,
@@ -763,6 +766,7 @@ fun SettingsScreen(
                             },
                             colors = ButtonDefaults.buttonColors(containerColor = SurfaceElevation),
                             shape = RoundedCornerShape(12.dp),
+                            enabled = false,
                             modifier = Modifier.weight(1f).testTag("settings_sync_now_button"),
                             contentPadding = PaddingValues(vertical = 10.dp, horizontal = 4.dp)
                         ) {
@@ -782,6 +786,7 @@ fun SettingsScreen(
                             },
                             colors = ButtonDefaults.buttonColors(containerColor = SurfaceElevation),
                             shape = RoundedCornerShape(12.dp),
+                            enabled = false,
                             modifier = Modifier.weight(1f).testTag("settings_backup_now_button"),
                             contentPadding = PaddingValues(vertical = 10.dp, horizontal = 4.dp)
                         ) {
@@ -801,6 +806,7 @@ fun SettingsScreen(
                             },
                             colors = ButtonDefaults.buttonColors(containerColor = SurfaceElevation),
                             shape = RoundedCornerShape(12.dp),
+                            enabled = false,
                             modifier = Modifier.weight(1f).testTag("settings_restore_backup_button"),
                             contentPadding = PaddingValues(vertical = 10.dp, horizontal = 4.dp)
                         ) {
@@ -985,12 +991,13 @@ fun SettingsScreen(
                 Column(modifier = Modifier.padding(6.dp)) {
                     SettingsItemRow(
                         icon = Icons.Default.Fingerprint,
-                        title = "Sblocco con Face ID / PIN",
-                        value = if (isBiometricsEnabled) "Attivo" else "Disattivo",
+                        title = "Sblocco biometrico / PIN",
+                        value = "Non configurato",
                         trailingContent = {
                             Switch(
-                                checked = isBiometricsEnabled,
-                                onCheckedChange = { isBiometricsEnabled = it },
+                                checked = false,
+                                onCheckedChange = {},
+                                enabled = false,
                                 colors = SwitchDefaults.colors(
                                     checkedThumbColor = Color.Black,
                                     checkedTrackColor = EmeraldPrimary,

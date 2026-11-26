@@ -27,3 +27,5 @@ This source snapshot is for auditable recovery. **Do not merge into main until C
 - **Ulteriore blocco prudenziale:** backup, ripristino e sync cloud sono temporaneamente disabilitati. Il ripristino precedente cancellava tabelle locali prima di acquisire tutte le collezioni remote. Conservati i sorgenti storici nel commit iniziale della PR, ma nessuna funzione cloud va presentata come attiva.
 
 - Eliminato l'onboarding con conti/saldi fittizi e la riassegnazione automatica dei movimenti orfani. Nuove entrate/uscite, eliminazioni e trasferimenti gestiscono saldo e scrittura in una singola transazione Room. Conti con movimenti non cancellabili automaticamente.
+
+- Rimossa la creazione automatica di budget di esempio. Le opzioni UI senza backend reale (tema, notifiche, biometria, cloud) sono contrassegnate come non configurate e disattivate.
