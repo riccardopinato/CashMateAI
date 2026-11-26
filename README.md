@@ -5,7 +5,7 @@ Questa directory contiene il progetto **Kotlin / Jetpack Compose** recuperato da
 ## Stato verificabile (26 novembre 2026)
 
 - Il codice sorgente, la UI storica, i modelli Room v6, DataStore, le funzioni di risparmio, regole, ricorrenze, analisi e divisione spese sono conservati.
-- Il percorso di recovery è una **PR in bozza** fino a superamento CI, test di migrazione da veri database storici e collaudo Android reale.
+- **Sorgenti originali recuperati in `main`** tramite [PR #3](https://github.com/riccardopinato/CashMateAI/pull/3), verificati da [CI #45861645951](https://github.com/riccardopinato/CashMateAI/actions/runs/45861645951) con compilazione Android e test unitari PASS. Il merge riguarda il **codice sorgente**, non certifica un aggiornamento in-place, una release Play o un collaudo su dispositivo; per quelli mancano la firma storica e fixture di migrazione pre-v6.
 - Le operazioni locali sono state rafforzate: nessuna creazione di conti/saldi di esempio, nessuna riassegnazione automatica dei movimenti, gestione atomica delle scritture e dei trasferimenti, blocco di nuove transazioni senza conto reale.
 - Room v6 **non cancella automaticamente** i dati durante una migrazione sconosciuta. Se la versione del vecchio DB non è supportata, l'apertura può fallire senza sovrascrivere il database: servirà una migrazione testata.
 - Login locale esplicito, senza utente dimostrativo o finto account Google. Google/Firebase richiedono credenziali reali per essere utilizzati.
