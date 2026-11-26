@@ -36,3 +36,6 @@ This source snapshot is for auditable recovery. **Do not merge into main until C
 - SyncManager e BackupRestoreManager hanno guardie di blocco anche per chiamate dirette; nessun upload/restore dovrà partire durante la fase di recupero.
 - Auto Backup Android temporaneamente disabilitato perché la protezione degli archivi finanziari non è stata verificata. Non equivale a backup manuale disponibile.
 - Test aggiuntivi su importi, rollback, duplicate ID e trasferimenti. Nessun test può simulare legittimamente la **firma APK storica** o una migrazione v1-v5 senza i relativi artefatti.
+
+- Aggiunta funzione **LocalVaultBackup** per snapshot logico completo delle 11 tabelle Room v6, cifratura AES-GCM con passphrase, selettore SAF, autenticazione/tag e restore consentito solo su archivio privo di dati; un errore determina rollback atomico. Non è compatibile con database storici di versione sconosciuta.
+- Test Robolectric v6 su esportazione, ripristino, password errata, collisione di dati già esistenti, e limiti dimensione. L'interfaccia non dichiara più il cloud come attivo.

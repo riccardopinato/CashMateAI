@@ -70,3 +70,8 @@ assert 'suspend fun syncPending(userId: String)' in source('app/src/main/java/co
 assert 'Sincronizzazione cloud disabilitata' in source('app/src/main/java/com/example/data/remote/SyncManager.kt')
 assert 'Backup cloud non disponibile' in source('app/src/main/java/com/example/data/remote/BackupRestoreManager.kt')
 assert 'Accesso cloud sospeso:' in source('app/src/main/java/com/example/data/remote/FirebaseServices.kt')
+
+assert 'restoreIfEmpty(password: CharArray' in source('app/src/main/java/com/example/data/local/LocalVaultBackup.kt')
+assert 'database.withTransaction' in source('app/src/main/java/com/example/data/local/LocalVaultBackup.kt')
+assert 'AES/GCM/NoPadding' in source('app/src/main/java/com/example/data/local/LocalVaultBackup.kt')
+assert 'LocalVaultBackup.readLimited' in source('app/src/main/java/com/example/ui/screens/SettingsScreen.kt')

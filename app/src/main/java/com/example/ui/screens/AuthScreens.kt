@@ -267,7 +267,7 @@ fun LoginScreen(
                         .fillMaxWidth()
                         .height(52.dp)
                         .testTag("google_login_button"),
-                    enabled = false // Account cloud sospesi finché l’isolamento v6 per UID non è verificato,
+                    enabled = false, // Account cloud sospesi finché l’isolamento v6 per UID non è verificato
                     colors = ButtonDefaults.outlinedButtonColors(containerColor = Color.White.copy(alpha = 0.03f))
                 ) {
                     Row(
@@ -603,7 +603,7 @@ fun RegisterScreen(
                         .fillMaxWidth()
                         .height(52.dp)
                         .testTag("google_register_button"),
-                    enabled = false // Account cloud sospesi finché l’isolamento v6 per UID non è verificato,
+                    enabled = false, // Account cloud sospesi finché l’isolamento v6 per UID non è verificato
                     colors = ButtonDefaults.outlinedButtonColors(containerColor = Color.White.copy(alpha = 0.03f))
                 ) {
                     Row(

@@ -107,4 +107,33 @@ class FinanceIntegrityTest {
             assertTrue(runCatching { accounts.insertAccount(newAccount(Double.NaN)) }.isFailure)
         }
     }
+    @Test fun v6LedgerSurvivesDatabaseCloseAndReopen() = runBlocking {
+        val fileName = "cashmate_reopen_${System.nanoTime()}.db"
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        val first = Room.databaseBuilder(context, AppDatabase::class.java, fileName).build()
+        try {
+            first.accountDao().insertAccount(newAccount(17.25))
+        } finally { first.close() }
+        val reopened = Room.databaseBuilder(context, AppDatabase::class.java, fileName).build()
+        try {
+            assertEquals(17.25, reopened.accountDao().getAllAccounts().first().single().saldo, 0.000001)
+            assertEquals(6, reopened.openHelper.writableDatabase.version)
+        } finally {
+            reopened.close()
+            context.deleteDatabase(fileName)
+        }
+    }
+
+    @Test fun localIdentityStaysStableWithoutCloudAuthentication() = runBlocking {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        val first = FirebaseAuthService(context)
+        val user = first.loginOffline().getOrThrow()
+        assertEquals("local", user.provider)
+        assertTrue(user.id.startsWith("local_"))
+        val second = FirebaseAuthService(context)
+        assertEquals(user.id, second.loginOffline().getOrThrow().id)
+        assertTrue(second.login("test@example.invalid", "test").isFailure)
+        assertTrue(second.register("test@example.invalid", "Test", "test").isFailure)
+    }
+
 }

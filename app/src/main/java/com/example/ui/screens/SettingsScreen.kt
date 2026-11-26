@@ -1,6 +1,14 @@
 package com.example.ui.screens
 
 import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import com.example.data.local.AppDatabase
+import com.example.data.local.LocalVaultBackup
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.BorderStroke
@@ -67,6 +75,108 @@ fun SettingsScreen(
     var isNotificationsEnabled by remember { mutableStateOf(true) }
     var isBiometricsEnabled by remember { mutableStateOf(false) }
     var showCurrencyDialog by remember { mutableStateOf(false) }
+
+    // Encrypted local vault: file permissions are granted only through Android's file picker.
+    val vaultContext = LocalContext.current
+    val vaultScope = rememberCoroutineScope()
+    val vault = remember(vaultContext) { LocalVaultBackup(AppDatabase.getDatabase(vaultContext)) }
+    var vaultMode by remember { mutableStateOf<String?>(null) }
+    var vaultPassword by remember { mutableStateOf("") }
+    var vaultPendingPassphrase by remember { mutableStateOf<CharArray?>(null) }
+    var vaultBusy by remember { mutableStateOf(false) }
+    val vaultExportLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.CreateDocument("application/octet-stream")
+    ) { uri ->
+        val password = vaultPendingPassphrase
+        vaultPendingPassphrase = null
+        if (uri == null || password == null) {
+            password?.fill('\u0000')
+        } else {
+            vaultBusy = true
+            vaultScope.launch {
+                try {
+                    withContext(Dispatchers.IO) {
+                        val encrypted = vault.exportEncrypted(password)
+                        requireNotNull(vaultContext.contentResolver.openOutputStream(uri, "w")) {
+                            "Impossibile aprire il file di destinazione"
+                        }.use { it.write(encrypted) }
+                    }
+                    Toast.makeText(vaultContext, "Backup locale cifrato salvato. Conserva la password.", Toast.LENGTH_LONG).show()
+                } catch (e: Exception) {
+                    Toast.makeText(vaultContext, e.message ?: "Esportazione non riuscita", Toast.LENGTH_LONG).show()
+                } finally {
+                    password.fill('\u0000')
+                    vaultBusy = false
+                }
+            }
+        }
+    }
+    val vaultImportLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.OpenDocument()
+    ) { uri ->
+        val password = vaultPendingPassphrase
+        vaultPendingPassphrase = null
+        if (uri == null || password == null) {
+            password?.fill('\u0000')
+        } else {
+            vaultBusy = true
+            vaultScope.launch {
+                try {
+                    val summary = withContext(Dispatchers.IO) {
+                        val bytes = requireNotNull(vaultContext.contentResolver.openInputStream(uri)) {
+                            "Impossibile leggere il file"
+                        }.use { LocalVaultBackup.readLimited(it) }
+                        vault.restoreIfEmpty(password, bytes)
+                    }
+                    Toast.makeText(vaultContext,
+                        "Ripristinati ${summary.accounts} conti e ${summary.transactions} movimenti. Riavvia l'app per ricaricare tutte le schermate.",
+                        Toast.LENGTH_LONG).show()
+                } catch (e: Exception) {
+                    Toast.makeText(vaultContext, e.message ?: "Ripristino annullato senza modificare i dati", Toast.LENGTH_LONG).show()
+                } finally {
+                    password.fill('\u0000')
+                    vaultBusy = false
+                }
+            }
+        }
+    }
+    if (vaultMode != null) {
+        val isExport = vaultMode == "export"
+        AlertDialog(
+            onDismissRequest = { vaultPassword = ""; vaultMode = null },
+            title = { Text(if (isExport) "Backup locale cifrato" else "Ripristina da backup") },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Text(
+                        if (isExport) "Crea una copia crittografata del database Room v6. Non perdere questa password: non è recuperabile."
+                        else "Ripristino consentito soltanto su un archivio vuoto. Il file deve provenire da CashMate AI Room v6 e avere la password corretta."
+                    )
+                    OutlinedTextField(
+                        value = vaultPassword,
+                        onValueChange = { vaultPassword = it },
+                        label = { Text("Password backup (minimo 12 caratteri)") },
+                        singleLine = true,
+                        visualTransformation = PasswordVisualTransformation(),
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password)
+                    )
+                }
+            },
+            confirmButton = {
+                Button(
+                    enabled = !vaultBusy && vaultPassword.length >= 12,
+                    onClick = {
+                        vaultPendingPassphrase?.fill('\u0000')
+                        vaultPendingPassphrase = vaultPassword.toCharArray()
+                        vaultPassword = ""
+                        vaultMode = null
+                        if (isExport) vaultExportLauncher.launch("CashMateAI-Backup.cmbackup")
+                        else vaultImportLauncher.launch(arrayOf("*/*"))
+                    }
+                ) { Text(if (isExport) "Scegli dove salvare" else "Seleziona backup") }
+            },
+            dismissButton = { TextButton(onClick = { vaultPassword = ""; vaultMode = null }) { Text("Annulla") } }
+        )
+    }
 
     // Calculate total estimated tokens consumed
     val totalEstimatedTokens = remember(aiUsageLogs) {
@@ -945,29 +1055,27 @@ fun SettingsScreen(
                     SettingsItemRow(
                         icon = Icons.Default.CloudUpload,
                         title = "Cloud Backup",
-                        value = "Backup Attivo",
-                        onClick = {}
-                    )
-                    HorizontalDivider(color = Color.White.copy(alpha = 0.04f), modifier = Modifier.padding(horizontal = 16.dp))
-                    SettingsItemRow(
-                        icon = Icons.Default.Download,
-                        title = "Importa Dati",
-                        value = "JSON / CSV",
-                        onClick = {}
+                        value = "Sospeso: dati conservati solo sul dispositivo"
                     )
                     HorizontalDivider(color = Color.White.copy(alpha = 0.04f), modifier = Modifier.padding(horizontal = 16.dp))
                     SettingsItemRow(
                         icon = Icons.Default.Upload,
-                        title = "Esporta Transazioni",
-                        value = "Esporta CSV",
-                        onClick = {}
+                        title = "Esporta backup locale cifrato",
+                        value = "Tutti i dati Room v6, protetti da password",
+                        onClick = { if (!vaultBusy) vaultMode = "export" }
+                    )
+                    HorizontalDivider(color = Color.White.copy(alpha = 0.04f), modifier = Modifier.padding(horizontal = 16.dp))
+                    SettingsItemRow(
+                        icon = Icons.Default.Download,
+                        title = "Ripristina backup locale",
+                        value = "Solo su un archivio vuoto, senza cancellazioni",
+                        onClick = { if (!vaultBusy) vaultMode = "import" }
                     )
                     HorizontalDivider(color = Color.White.copy(alpha = 0.04f), modifier = Modifier.padding(horizontal = 16.dp))
                     SettingsItemRow(
                         icon = Icons.Default.Sync,
-                        title = "Sincronizza Ora",
-                        value = "Aggiornato",
-                        onClick = {}
+                        title = "Sincronizzazione cloud",
+                        value = "Non configurata"
                     )
                 }
             }
@@ -1011,8 +1119,7 @@ fun SettingsScreen(
                     SettingsItemRow(
                         icon = Icons.Default.Lock,
                         title = "Modifica Codice PIN",
-                        value = "Configurato",
-                        onClick = {}
+                        value = "Non configurato"
                     )
                     HorizontalDivider(color = Color.White.copy(alpha = 0.04f), modifier = Modifier.padding(horizontal = 16.dp))
                     SettingsItemRow(
@@ -1051,8 +1158,7 @@ fun SettingsScreen(
                     SettingsItemRow(
                         icon = Icons.Default.Info,
                         title = "Versione Applicazione",
-                        value = "v2.1.0-ai",
-                        onClick = {}
+                        value = "Recovery 1.0 (sviluppo)"
                     )
                     HorizontalDivider(color = Color.White.copy(alpha = 0.04f), modifier = Modifier.padding(horizontal = 16.dp))
                     SettingsItemRow(

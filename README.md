@@ -41,5 +41,13 @@ I dati dell'utente non sono stati importati. Mancano `google-services.json`, cre
 - Nuovi movimenti ammessi solo con ID nuovo, conto esistente e importo valido; nessuna sostituzione silenziosa tramite `INSERT OR REPLACE`.
 - Eliminazione di un singolo lato di un trasferimento rifiutata; saldi e movimenti sono aggiornati in modo atomico.
 - Accesso cloud email/Google, sincronizzazione, backup/ripristino cloud e Premium sospesi senza false conferme.
-- Il backup automatico Android è disattivato; **i dati locali non sono attualmente protetti da un meccanismo di esportazione certificato**: non utilizzare l'app come unico archivio finanziario.
+- Il backup automatico Android è disattivato; è ora disponibile l'esportazione locale cifrata con ripristino solo su un archivio vuoto. Il collaudo su dispositivo resta da completare: non utilizzare l'app come unico archivio finanziario.
 - Le migrazioni da database con `user_version < 6` non sono state validate perché mancano schemi storici e APK firmato originale. L'app non deve cancellare automaticamente le tabelle per aggiornarsi.
+
+## Esportazione e ripristino locale cifrati
+
+La schermata Impostazioni permette un **backup locale crittografato** del database Room v6 tramite selettore documenti Android. Chi utilizza la funzione sceglie una passphrase di almeno 12 caratteri, che non viene memorizzata. Formato `CMVAULT1`: PBKDF2-HMAC-SHA1 con 310.000 iterazioni, sale casuale e AES-256-GCM (nonce casuale, autenticazione crittografica). **Non è compatibile** con backup di APK storici o altri database.
+
+L'importazione verifica formato, autenticazione, versione Room v6, tabella e colonne, e ripristina in una transazione Room. **Non sovrascrive database già utilizzati**: per prevenire perdite, un ripristino si può effettuare soltanto in una nuova installazione con le tabelle utente vuote. Dopo l'importazione l'app va riavviata per aggiornare le schermate. Il backup automatico Android e il cloud restano disabilitati.
+
+La passphrase non è recuperabile e un backup esportato non equivale a una migrazione v1-v5: servono schemi storici e keystore originale per aggiornamenti in-place certificati.
