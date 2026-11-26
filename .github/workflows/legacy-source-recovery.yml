@@ -18,7 +18,7 @@ jobs:
           import re
           root = Path('app/src/main/java/com/example')
           files = list(root.rglob('*.kt'))
-          assert len(files) >= 55, len(files)
+          assert len(files) == 54, len(files)  # 54 main + 4 test Kotlin files in source archive
           gradle = Path('app/build.gradle.kts').read_text()
           assert 'com.aistudio.cashmate.aqzwlx' in gradle
           assert Path('app/src/main/java/com/example/data/local/AppDatabase.kt').exists()
