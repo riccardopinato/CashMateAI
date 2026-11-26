@@ -39,3 +39,5 @@ This source snapshot is for auditable recovery. **Do not merge into main until C
 
 - Aggiunta funzione **LocalVaultBackup** per snapshot logico completo delle 11 tabelle Room v6, cifratura AES-GCM con passphrase, selettore SAF, autenticazione/tag e restore consentito solo su archivio privo di dati; un errore determina rollback atomico. Non è compatibile con database storici di versione sconosciuta.
 - Test Robolectric v6 su esportazione, ripristino, password errata, collisione di dati già esistenti, e limiti dimensione. L'interfaccia non dichiara più il cloud come attivo.
+
+- Aggiunta guardia di startup read-only per versioni DB diverse da Room v6: presenta errore non distruttivo e richiede migrazione documentata. Test con intestazioni SQLite sintetiche v5, v6 e corrotte.

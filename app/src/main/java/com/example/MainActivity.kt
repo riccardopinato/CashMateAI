@@ -9,6 +9,14 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
 import com.example.navigation.AppNavGraph
+import com.example.data.local.LegacyDatabaseGuard
+import androidx.compose.material3.Button
+import androidx.compose.material3.Text
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.padding
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.unit.dp
 import com.example.premium.PremiumManager
 import com.example.ui.theme.MyApplicationTheme
 import com.example.ui.viewmodel.FinanceViewModel
@@ -22,14 +30,28 @@ class MainActivity : ComponentActivity() {
     initializeFirebase()
     PremiumManager.init(this)
     enableEdgeToEdge()
+    val legacyBlock = LegacyDatabaseGuard.blockReason(applicationContext)
     setContent {
       MyApplicationTheme {
         Surface(
           modifier = Modifier.fillMaxSize(),
           color = MaterialTheme.colorScheme.background
         ) {
-          val viewModel: FinanceViewModel = viewModel()
-          AppNavGraph(viewModel = viewModel)
+          if (legacyBlock != null) {
+            Column(
+              modifier = Modifier.fillMaxSize().padding(24.dp),
+              horizontalAlignment = Alignment.CenterHorizontally,
+              verticalArrangement = Arrangement.Center
+            ) {
+              Text("Archivio storico protetto", style = MaterialTheme.typography.headlineSmall)
+              Text(legacyBlock)
+              Text("Il codice di recupero non cancellerà il tuo database. Serve una migrazione verificata dalla vecchia versione.")
+              Button(onClick = { finish() }) { Text("Chiudi l'app") }
+            }
+          } else {
+            val viewModel: FinanceViewModel = viewModel()
+            AppNavGraph(viewModel = viewModel)
+          }
         }
       }
     }

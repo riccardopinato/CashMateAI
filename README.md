@@ -51,3 +51,7 @@ La schermata Impostazioni permette un **backup locale crittografato** del databa
 L'importazione verifica formato, autenticazione, versione Room v6, tabella e colonne, e ripristina in una transazione Room. **Non sovrascrive database già utilizzati**: per prevenire perdite, un ripristino si può effettuare soltanto in una nuova installazione con le tabelle utente vuote. Dopo l'importazione l'app va riavviata per aggiornare le schermate. Il backup automatico Android e il cloud restano disabilitati.
 
 La passphrase non è recuperabile e un backup esportato non equivale a una migrazione v1-v5: servono schemi storici e keystore originale per aggiornamenti in-place certificati.
+
+## Blocco preventivo per vecchi database
+
+Prima di creare la ViewModel, l'attività controlla in lettura l'header SQLite dell'eventuale database `cashmate_database`. Se il numero di versione non è 6, visualizza un blocco esplicito senza aprire Room, migrare, sovrascrivere o eliminare dati. Il gate non risolve le migrazioni pregresse e la firma dell'APK originale rimane indispensabile per gli aggiornamenti in-place.

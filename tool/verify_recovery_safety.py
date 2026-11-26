@@ -75,3 +75,6 @@ assert 'restoreIfEmpty(password: CharArray' in source('app/src/main/java/com/exa
 assert 'database.withTransaction' in source('app/src/main/java/com/example/data/local/LocalVaultBackup.kt')
 assert 'AES/GCM/NoPadding' in source('app/src/main/java/com/example/data/local/LocalVaultBackup.kt')
 assert 'LocalVaultBackup.readLimited' in source('app/src/main/java/com/example/ui/screens/SettingsScreen.kt')
+
+assert 'LegacyDatabaseGuard.blockReason(applicationContext)' in source('app/src/main/java/com/example/MainActivity.kt')
+assert "Non disinstallare l'app" in source('app/src/main/java/com/example/data/local/LegacyDatabaseGuard.kt')
