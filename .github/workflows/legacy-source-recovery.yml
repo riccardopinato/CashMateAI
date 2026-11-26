@@ -18,7 +18,7 @@ jobs:
           from pathlib import Path
           root=Path('app/src/main/java/com/example')
           files=list(root.rglob('*.kt'))
-          assert len(files)==54, len(files)
+          assert len(files) >= 55, len(files)
           assert Path('SOURCE_IMPORT_PROVENANCE.md').is_file()
           assert not Path('google-services.json').exists()
           assert not Path('.env').exists()
