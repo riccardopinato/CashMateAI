@@ -57,6 +57,7 @@ class FinanceViewModel(application: Application) : AndroidViewModel(application)
         val backupRestoreManager = com.example.data.remote.BackupRestoreManager(application, database, firestoreService, userSettingsStore)
 
         repository = FinanceRepository(
+            database = database,
             transactionDao = database.transactionDao(),
             accountDao = database.accountDao(),
             splitBillDao = database.splitBillDao(),
@@ -280,40 +281,17 @@ class FinanceViewModel(application: Application) : AndroidViewModel(application)
                 android.widget.Toast.makeText(getApplication(), it.message ?: "Operazione non salvata", android.widget.Toast.LENGTH_LONG).show()
                 return@launch
             }
-            if (accountId != null) {
-                val db = AppDatabase.getDatabase(getApplication())
-                val account = db.accountDao().getAccountByIdSync(accountId)
-                if (account != null) {
-                    val delta = if (type == TransactionType.INCOME) amount else -amount
-                    db.accountDao().updateAccount(
-                        account.copy(
-                            saldo = account.saldo + delta,
-                            aggiornatoIl = System.currentTimeMillis()
-                        )
-                    )
-                }
-            }
+            // The repository applies transaction and balance changes atomically.
             autoSyncPending()
         }
     }
 
     fun deleteTransaction(id: Int) {
         viewModelScope.launch {
-            val db = AppDatabase.getDatabase(getApplication())
-            val tx = transactions.value.find { it.id == id }
-            if (tx?.accountId != null) {
-                val account = db.accountDao().getAccountByIdSync(tx.accountId)
-                if (account != null) {
-                    val delta = if (tx.type == TransactionType.INCOME) -tx.amount else tx.amount
-                    db.accountDao().updateAccount(
-                        account.copy(
-                            saldo = account.saldo + delta,
-                            aggiornatoIl = System.currentTimeMillis()
-                        )
-                    )
+            runCatching { repository.deleteTransaction(id) }
+                .onFailure {
+                    android.widget.Toast.makeText(getApplication(), it.message ?: "Impossibile eliminare il movimento", android.widget.Toast.LENGTH_LONG).show()
                 }
-            }
-            repository.deleteTransaction(id)
             autoSyncPending()
         }
     }

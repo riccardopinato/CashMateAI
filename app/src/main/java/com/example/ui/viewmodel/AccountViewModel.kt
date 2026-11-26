@@ -21,6 +21,7 @@ class AccountViewModel(application: Application) : AndroidViewModel(application)
     init {
         val database = AppDatabase.getDatabase(application)
         repository = AccountRepository(
+            database = database,
             accountDao = database.accountDao(),
             transactionDao = database.transactionDao()
         )
@@ -37,75 +38,8 @@ class AccountViewModel(application: Application) : AndroidViewModel(application)
             initialValue = "€"
         )
 
-        // Seed default accounts if database is empty, and migrate transactions without account
-        viewModelScope.launch {
-            val db = AppDatabase.getDatabase(application)
-            val accDao = db.accountDao()
-            val txDao = db.transactionDao()
-
-            // 1. Clean up invalid accounts (e.g., virtual or fake accounts like "Tutti i conti" or "Tutto")
-            val allAccList = accDao.getAllAccounts().first()
-            val invalidNames = listOf("tutti i conti", "tutto", "tutti", "all", "all_accounts")
-            val invalidAccounts = allAccList.filter { it.nome.trim().lowercase() in invalidNames }
-            val invalidIds = invalidAccounts.map { it.id }.toSet()
-
-            invalidAccounts.forEach { acc ->
-                accDao.deleteAccountById(acc.id)
-            }
-
-            // Check if database is empty
-            var current = accDao.getAllAccounts().first()
-            if (current.isEmpty()) {
-                accDao.insertAccount(
-                    Account(
-                        nome = "Conto Corrente",
-                        tipo = "Conto Corrente",
-                        saldo = 2500.0,
-                        colore = "#00E676",
-                        icona = "🏦",
-                        ordine = 1
-                    )
-                )
-                accDao.insertAccount(
-                    Account(
-                        nome = "Revolut",
-                        tipo = "Revolut",
-                        saldo = 450.0,
-                        colore = "#3B82F6",
-                        icona = "💳",
-                        ordine = 2
-                    )
-                )
-                accDao.insertAccount(
-                    Account(
-                        nome = "Contanti",
-                        tipo = "Contanti",
-                        saldo = 80.0,
-                        colore = "#FFC857",
-                        icona = "💵",
-                        ordine = 3
-                    )
-                )
-                current = accDao.getAllAccounts().first()
-            }
-
-            // Perform transaction migration: automatically assign transactions with null/invalid accountId to "Conto Corrente"
-            val defaultAccount = current.find { it.nome == "Conto Corrente" } ?: current.firstOrNull()
-            if (defaultAccount != null) {
-                val allTx = txDao.getAllTransactions().first()
-                val validAccountIds = current.map { it.id }.toSet()
-
-                allTx.forEach { tx ->
-                    val isOrphan = tx.accountId == null ||
-                                   tx.accountId in invalidIds ||
-                                   tx.accountId !in validAccountIds
-
-                    if (isOrphan) {
-                        txDao.insertTransaction(tx.copy(accountId = defaultAccount.id))
-                    }
-                }
-            }
-        }
+        // User-owned accounts must never be seeded, deleted or reassigned on startup.
+        // Historical orphans require a separately reviewed migration and user confirmation.
     }
 
     fun addAccount(nome: String, tipo: String, saldoIniziale: Double, colore: String, icona: String) {
@@ -124,13 +58,19 @@ class AccountViewModel(application: Application) : AndroidViewModel(application)
 
     fun deleteAccount(id: Int) {
         viewModelScope.launch {
-            repository.deleteAccount(id)
+            runCatching { repository.deleteAccount(id) }
+                .onFailure {
+                    android.widget.Toast.makeText(getApplication(), it.message ?: "Conto non eliminato", android.widget.Toast.LENGTH_LONG).show()
+                }
         }
     }
 
     fun transfer(fromAccountId: Int, toAccountId: Int, amount: Double) {
         viewModelScope.launch {
-            repository.transfer(fromAccountId, toAccountId, amount)
+            runCatching { repository.transfer(fromAccountId, toAccountId, amount) }
+                .onFailure {
+                    android.widget.Toast.makeText(getApplication(), it.message ?: "Trasferimento non eseguito", android.widget.Toast.LENGTH_LONG).show()
+                }
         }
     }
 }

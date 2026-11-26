@@ -41,6 +41,11 @@ for file in ('SyncManager.kt', 'BackupRestoreManager.kt'):
     assert '.getOrThrow()' in content
 repo = source('app/src/main/java/com/example/data/repository/FinanceRepository.kt')
 assert 'getAccountByIdSync' in repo
+assert 'database.withTransaction' in repo
+assert 'countTransactionsForAccount' in source('app/src/main/java/com/example/data/repository/AccountRepository.kt')
+assert 'saldo = 2500.0' not in source('app/src/main/java/com/example/ui/viewmodel/AccountViewModel.kt')
+assert 'Room.inMemoryDatabaseBuilder' in source('app/src/test/java/com/example/AccountRecoveryTest.kt')
+assert 'invalidAccounts.forEach' not in source('app/src/main/java/com/example/ui/viewmodel/AccountViewModel.kt')
 assert 'Backup cloud sospeso' in repo
 assert 'Ripristino cloud sospeso' in repo
 assert 'Sincronizzazione cloud sospesa' in repo

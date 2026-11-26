@@ -4,6 +4,8 @@ import com.example.ai.GeminiAiService
 import com.example.data.local.BudgetDao
 import com.example.data.local.SplitBillDao
 import com.example.data.local.TransactionDao
+import com.example.data.local.AppDatabase
+import androidx.room.withTransaction
 import com.example.data.local.UserSettingsStore
 import com.example.data.remote.FirebaseAuthService
 import com.example.domain.model.*
@@ -11,6 +13,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 
 class FinanceRepository(
+    private val database: AppDatabase,
     private val transactionDao: TransactionDao,
     private val accountDao: com.example.data.local.AccountDao,
     private val splitBillDao: SplitBillDao,
@@ -29,15 +32,30 @@ class FinanceRepository(
 
     suspend fun insertTransaction(transaction: Transaction) {
         val id = transaction.accountId
-        require(id != null && id > 0 && accountDao.getAccountByIdSync(id) != null) {
-            "Seleziona un conto reale prima di salvare il movimento"
-        }
+        require(id != null && id > 0) { "Seleziona un conto reale prima di salvare il movimento" }
         require(transaction.amount.isFinite() && transaction.amount > 0.0) { "Importo non valido" }
-        transactionDao.insertTransaction(transaction)
+        database.withTransaction {
+            val account = requireNotNull(accountDao.getAccountByIdSync(id)) { "Conto inesistente" }
+            transactionDao.insertTransaction(transaction)
+            val delta = if (transaction.type == TransactionType.INCOME) transaction.amount else -transaction.amount
+            accountDao.updateAccount(account.copy(
+                saldo = account.saldo + delta, aggiornatoIl = System.currentTimeMillis()
+            ))
+        }
     }
 
     suspend fun deleteTransaction(id: Int) {
-        transactionDao.deleteTransactionById(id)
+        database.withTransaction {
+            val tx = transactionDao.getTransactionByIdSync(id) ?: return@withTransaction
+            val account = tx.accountId?.let { accountDao.getAccountByIdSync(it) }
+            if (account != null) {
+                val reversal = if (tx.type == TransactionType.INCOME) -tx.amount else tx.amount
+                accountDao.updateAccount(account.copy(
+                    saldo = account.saldo + reversal, aggiornatoIl = System.currentTimeMillis()
+                ))
+            }
+            transactionDao.deleteTransactionById(id)
+        }
     }
 
     // Split bills
