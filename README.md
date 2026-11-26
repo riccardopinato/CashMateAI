@@ -1,28 +1,22 @@
-# CashMate AI — Android
+<div align="center">
+<img width="1200" height="475" alt="GHBanner" src="https://ai.google.dev/static/site-assets/images/share-ais-513315318.png" />
+</div>
 
-Ricostruzione verificabile (26 novembre 2026) del progetto di finanza personale Android concepito in precedenza. Il repository originale era vuoto: **questi file sono una nuova implementazione basata sui requisiti storici, non il recupero byte-per-byte del vecchio codice**.
+# Run and deploy your AI Studio app
 
-## Funzioni presenti nel baseline 0.1
-- Kotlin / Jetpack Compose, Room e DataStore; dati salvati **solo sul dispositivo**.
-- Conti reali registrati manualmente (nome e saldo di apertura).
-- Entrate e uscite in centesimi interi, categorie, note e cronologia, con cancellazione esplicita.
-- Dashboard aggregata oppure per conto; analisi per categoria e suddivisione di una spesa.
-- «Tutti i conti» è SOLO un filtro di lettura. Per registrare un'operazione occorre scegliere un conto esistente: nessuna transazione può avere un account virtuale/aggregato.
-- Tema chiaro/scuro, impostazione persistita con DataStore.
-- Nessun utente demo, dati finti, provider cloud fittizio, falsa AI o acquisizione credenziali.
+This contains everything you need to run your app locally.
 
-## Non implementato o non configurato
-Firebase Auth (solo email/password o Google, senza Facebook), Firestore/backup/restore, RevenueCat, coach Gemini e OCR. Queste integrazioni richiedono credenziali, requisiti privacy e test specifici; sono disattivate e NON vengono presentate come funzionanti. Decision Studio è [un'idea di ricerca](https://github.com/riccardopinato/CashMateAI/issues/1), non parte della 0.1.
+View your app in AI Studio: https://ai.studio/apps/42a28875-d6cd-4627-b565-509db3cab7ca
 
-## Come compilare
-Aprire il progetto Android Studio con JDK 17 e Android SDK 36. Gradle 8.13. In alternativa:
-- installare Gradle 8.13
-- eseguire gradle :app:testDebugUnitTest :app:assembleDebug
+## Run Locally
 
-La CI esegue questi stessi controlli. Non è garantita la compatibilità d'aggiornamento con eventuali APK storici: mancano sorgente originale, package ID e firma di distribuzione verificabili.
+**Prerequisites:**  [Android Studio](https://developer.android.com/studio)
 
-## Requisiti canonici
-- Niente login simulato; eventuale autenticazione futura *esclusivamente* email/password e Google Sign-In.
-- La scelta del conto reale è obbligatoria nell'inserimento.
-- Monetizzazione, cloud sync e funzioni AI onerose non bloccano la V1 locale.
-- Nessun import automatico di dati personali.
+
+1. Open Android Studio
+2. Select **Open** and choose the directory containing this project
+3. Allow Android Studio to fix any incompatibilities as it imports the project.
+4. Create a file named `.env` in the project directory and set `GEMINI_API_KEY` in that file to your Gemini API key (see `.env.example` for an example)
+5. Remove this line from the app's `build.gradle.kts` file: `signingConfig = signingConfigs.getByName("debugConfig")`
+6. Run the app on an emulator or physical device
+7. If you have already published your app in AI Studio, please [request upload key reset](https://support.google.com/googleplay/android-developer/answer/9842756#zippy=%2Crequest-an-upload-key-reset) in Google Play Console.
