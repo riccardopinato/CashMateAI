@@ -11,24 +11,18 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Validate recovered source identity
+      - name: Validate recovered source identity and safety invariants
         run: |
+          python3 tool/verify_recovery_safety.py
           python3 - <<'PY'
           from pathlib import Path
-          import re
-          root = Path('app/src/main/java/com/example')
-          files = list(root.rglob('*.kt'))
-          assert len(files) == 54, len(files)  # 54 main + 4 test Kotlin files in source archive
-          gradle = Path('app/build.gradle.kts').read_text()
-          assert 'com.aistudio.cashmate.aqzwlx' in gradle
-          assert Path('app/src/main/java/com/example/data/local/AppDatabase.kt').exists()
-          assert Path('SOURCE_IMPORT_PROVENANCE.md').exists()
+          root=Path('app/src/main/java/com/example')
+          files=list(root.rglob('*.kt'))
+          assert len(files)==54, len(files)
+          assert Path('SOURCE_IMPORT_PROVENANCE.md').is_file()
           assert not Path('google-services.json').exists()
           assert not Path('.env').exists()
-          for f in Path('.').rglob('*'):
-              if f.is_file() and f.suffix in {'.kt','.md','.kts'}:
-                  assert 'riccardo121296@gmail.com' not in f.read_text(errors='replace'), f
-          print(f"Recovered Kotlin sources: {len(files)}")
+          print(f'PASS: {len(files)} recovered main Kotlin files')
           PY
   android-build:
     runs-on: ubuntu-latest
@@ -48,11 +42,12 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '9.3.1'
-      - name: Tests and debug APK (no secrets)
+      - name: Test and build original CashMate
         run: gradle :app:testDebugUnitTest :app:assembleDebug --stacktrace --no-daemon
-      - name: Attach debug APK
+      - name: Attach test APK
         if: success()
         uses: actions/upload-artifact@v4
         with:
-          name: CashMate-original-debug-UNVERIFIED
+          name: CashMate-original-debug-REQUIRES-DEVICE-QA
           path: app/build/outputs/apk/debug/*.apk
+          if-no-files-found: error

@@ -40,7 +40,7 @@ class SyncManager(
                     "syncStatus" to "SYNCED",
                     "lastSyncedAt" to updatedTx.lastSyncedAt
                 )
-                firestoreService.uploadEntity(userId, "transactions", updatedTx.id.toString(), map)
+                firestoreService.uploadEntity(userId, "transactions", updatedTx.id.toString(), map).getOrThrow()
                 database.transactionDao().insertTransaction(updatedTx)
             }
 
@@ -66,7 +66,7 @@ class SyncManager(
                     "syncStatus" to "SYNCED",
                     "lastSyncedAt" to updatedAcc.lastSyncedAt
                 )
-                firestoreService.uploadEntity(userId, "accounts", updatedAcc.id.toString(), map)
+                firestoreService.uploadEntity(userId, "accounts", updatedAcc.id.toString(), map).getOrThrow()
                 database.accountDao().updateAccount(updatedAcc)
             }
 
@@ -88,7 +88,7 @@ class SyncManager(
                     "syncStatus" to "SYNCED",
                     "lastSyncedAt" to updatedBill.lastSyncedAt
                 )
-                firestoreService.uploadEntity(userId, "splitBills", updatedBill.id.toString(), map)
+                firestoreService.uploadEntity(userId, "splitBills", updatedBill.id.toString(), map).getOrThrow()
                 database.splitBillDao().insertSplitBill(updatedBill)
             }
 
@@ -115,7 +115,7 @@ class SyncManager(
                     "syncStatus" to "SYNCED",
                     "lastSyncedAt" to updatedGoal.lastSyncedAt
                 )
-                firestoreService.uploadEntity(userId, "goals", updatedGoal.id.toString(), map)
+                firestoreService.uploadEntity(userId, "goals", updatedGoal.id.toString(), map).getOrThrow()
                 database.savingsGoalDao().insertSavingsGoal(updatedGoal)
             }
 
@@ -138,7 +138,7 @@ class SyncManager(
                     "syncStatus" to "SYNCED",
                     "lastSyncedAt" to updatedRule.lastSyncedAt
                 )
-                firestoreService.uploadEntity(userId, "rules", updatedRule.id.toString(), map)
+                firestoreService.uploadEntity(userId, "rules", updatedRule.id.toString(), map).getOrThrow()
                 database.transactionRuleDao().insertRule(updatedRule)
             }
 
@@ -165,7 +165,7 @@ class SyncManager(
                     "syncStatus" to "SYNCED",
                     "lastSyncedAt" to updatedRt.lastSyncedAt
                 )
-                firestoreService.uploadEntity(userId, "recurringTransactions", updatedRt.id.toString(), map)
+                firestoreService.uploadEntity(userId, "recurringTransactions", updatedRt.id.toString(), map).getOrThrow()
                 database.recurringTransactionDao().insertRecurring(updatedRt)
             }
 
@@ -187,13 +187,14 @@ class SyncManager(
                     "syncStatus" to "SYNCED",
                     "lastSyncedAt" to updatedTe.lastSyncedAt
                 )
-                firestoreService.uploadEntity(userId, "timelineEvents", updatedTe.id.toString(), map)
+                firestoreService.uploadEntity(userId, "timelineEvents", updatedTe.id.toString(), map).getOrThrow()
                 database.timelineEventDao().insertEvent(updatedTe)
             }
 
             Log.d("SyncManager", "Sync pending completed successfully")
         } catch (e: Exception) {
             Log.e("SyncManager", "Error syncing pending items", e)
+            throw e // do not report overall sync success after a failed upload
         }
     }
 
@@ -273,7 +274,7 @@ class SyncManager(
                         "syncStatus" to "SYNCED",
                         "lastSyncedAt" to System.currentTimeMillis()
                     )
-                    firestoreService.uploadEntity(userId, "transactions", local.id.toString(), map)
+                    firestoreService.uploadEntity(userId, "transactions", local.id.toString(), map).getOrThrow()
                 }
             }
 
@@ -297,7 +298,7 @@ class SyncManager(
                         "syncStatus" to "SYNCED",
                         "lastSyncedAt" to System.currentTimeMillis()
                     )
-                    firestoreService.uploadEntity(userId, "transactions", local.id.toString(), map)
+                    firestoreService.uploadEntity(userId, "transactions", local.id.toString(), map).getOrThrow()
                 }
             }
 
@@ -371,7 +372,7 @@ class SyncManager(
                         "syncStatus" to "SYNCED",
                         "lastSyncedAt" to System.currentTimeMillis()
                     )
-                    firestoreService.uploadEntity(userId, "accounts", local.id.toString(), map)
+                    firestoreService.uploadEntity(userId, "accounts", local.id.toString(), map).getOrThrow()
                 }
             }
 
@@ -396,7 +397,7 @@ class SyncManager(
                         "syncStatus" to "SYNCED",
                         "lastSyncedAt" to System.currentTimeMillis()
                     )
-                    firestoreService.uploadEntity(userId, "accounts", local.id.toString(), map)
+                    firestoreService.uploadEntity(userId, "accounts", local.id.toString(), map).getOrThrow()
                 }
             }
 
@@ -473,7 +474,7 @@ class SyncManager(
                         "syncStatus" to "SYNCED",
                         "lastSyncedAt" to System.currentTimeMillis()
                     )
-                    firestoreService.uploadEntity(userId, "goals", local.id.toString(), map)
+                    firestoreService.uploadEntity(userId, "goals", local.id.toString(), map).getOrThrow()
                 }
             }
 
@@ -499,7 +500,7 @@ class SyncManager(
                         "syncStatus" to "SYNCED",
                         "lastSyncedAt" to System.currentTimeMillis()
                     )
-                    firestoreService.uploadEntity(userId, "goals", local.id.toString(), map)
+                    firestoreService.uploadEntity(userId, "goals", local.id.toString(), map).getOrThrow()
                 }
             }
 

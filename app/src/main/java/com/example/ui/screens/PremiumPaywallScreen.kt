@@ -293,12 +293,9 @@ fun PremiumPaywallScreen(
             ) {
                 Button(
                     onClick = {
-                        val plan = if (selectedPlanOption == "monthly") PremiumPlan.PREMIUM else PremiumPlan.LIFETIME
-                        val expText = if (selectedPlanOption == "monthly") "04/07/2027" else "Illimitata"
-                        PremiumManager.setPlan(context, plan, expText)
-                        viewModel.togglePremiumStatus(true)
-                        Toast.makeText(context, "Sottoscrizione attivata con successo!", Toast.LENGTH_LONG).show()
+                        Toast.makeText(context, "Acquisti non configurati in questa versione.", Toast.LENGTH_LONG).show()
                     },
+                    enabled = false,
                     colors = ButtonDefaults.buttonColors(containerColor = EmeraldPrimary),
                     shape = RoundedCornerShape(18.dp),
                     modifier = Modifier
@@ -307,7 +304,7 @@ fun PremiumPaywallScreen(
                         .testTag("paywall_cta_button")
                 ) {
                     Text(
-                        text = if (selectedPlanOption == "monthly") "Abbonati Ora - Prova Gratuita" else "Sblocca Lifetime Ora",
+                        text = "Acquisti non disponibili",
                         fontSize = 15.sp,
                         fontWeight = FontWeight.Black,
                         color = Color.Black
@@ -321,10 +318,9 @@ fun PremiumPaywallScreen(
                 ) {
                     TextButton(
                         onClick = {
-                            PremiumManager.setPlan(context, PremiumPlan.PREMIUM, "04/07/2027")
-                            viewModel.togglePremiumStatus(true)
-                            Toast.makeText(context, "Acquisti ripristinati correttamente!", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(context, "Ripristino acquisti non configurato.", Toast.LENGTH_LONG).show()
                         },
+                        enabled = false,
                         modifier = Modifier.testTag("restore_purchases_button")
                     ) {
                         Text(

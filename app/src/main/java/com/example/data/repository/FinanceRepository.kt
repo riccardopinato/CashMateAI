@@ -12,6 +12,7 @@ import kotlinx.coroutines.flow.first
 
 class FinanceRepository(
     private val transactionDao: TransactionDao,
+    private val accountDao: com.example.data.local.AccountDao,
     private val splitBillDao: SplitBillDao,
     private val budgetDao: BudgetDao,
     private val userSettingsStore: UserSettingsStore,
@@ -27,6 +28,11 @@ class FinanceRepository(
     val allTransactions: Flow<List<Transaction>> = transactionDao.getAllTransactions()
 
     suspend fun insertTransaction(transaction: Transaction) {
+        val id = transaction.accountId
+        require(id != null && id > 0 && accountDao.getAccountByIdSync(id) != null) {
+            "Seleziona un conto reale prima di salvare il movimento"
+        }
+        require(transaction.amount.isFinite() && transaction.amount > 0.0) { "Importo non valido" }
         transactionDao.insertTransaction(transaction)
     }
 
@@ -57,11 +63,12 @@ class FinanceRepository(
     }
 
     // Preferences
-    val isPremium: Flow<Boolean> = userSettingsStore.isPremium
+    val isPremium: Flow<Boolean> = kotlinx.coroutines.flow.flowOf(false) // no verified billing integration
     val currency: Flow<String> = userSettingsStore.currency
 
     suspend fun setPremiumStatus(isPremium: Boolean) {
-        userSettingsStore.setPremium(isPremium)
+        if (isPremium) return // never grant an unverified entitlement
+        userSettingsStore.setPremium(false)
         firebaseAuthService.setPremiumStatus(isPremium)
     }
 
@@ -108,14 +115,20 @@ class FinanceRepository(
     }
 
     suspend fun backupNow(userId: String): Result<Unit> {
+        if (!firebaseAuthService.isCloudSession(userId))
+            return Result.failure(IllegalStateException("Backup cloud richiede un account Firebase verificato."))
         return backupRestoreManager?.backupNow(userId) ?: Result.failure(Exception("Backup manager non disponibile."))
     }
 
     suspend fun restoreNow(userId: String): Result<Unit> {
+        if (!firebaseAuthService.isCloudSession(userId))
+            return Result.failure(IllegalStateException("Ripristino cloud richiede un account Firebase verificato."))
         return backupRestoreManager?.restoreNow(userId) ?: Result.failure(Exception("Restore manager non disponibile."))
     }
 
     suspend fun syncAllBidirectional(userId: String): Result<Unit> {
+        if (!firebaseAuthService.isCloudSession(userId))
+            return Result.failure(IllegalStateException("Sincronizzazione cloud richiede un account Firebase verificato."))
         return syncManager?.syncAllBidirectional(userId) ?: Result.failure(Exception("Sync manager non disponibile."))
     }
 }

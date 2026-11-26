@@ -80,35 +80,20 @@ class GeminiAiService(
 
             // 3. Check for API key presence
             val apiKey = BuildConfig.GEMINI_API_KEY
-            val isDemoMode = apiKey.isEmpty() || apiKey == "MY_GEMINI_API_KEY"
-
-            val jsonText: String = if (isDemoMode) {
-                // Return a realistic simulation response
-                """
-                {
-                  "summary": "Le tue spese correnti mostrano un volume di uscite moderato, ma riscontriamo margini di ottimizzazione significativi sulle spese accessorie.",
-                  "topRiskCategory": "Shopping & Food",
-                  "savingTips": [
-                    "Prova il trucco dei '3 giorni': aspetta 72 ore prima di procedere ad acquisti di shopping non urgenti.",
-                    "Pianifica la spesa alimentare settimanale per evitare ordini d'asporto last-minute.",
-                    "Ottimizza gli abbonamenti mensili disattivando i servizi che non usi regolarmente."
-                  ],
-                  "budgetForecast": "Proiezione stabile. Spenderai circa il 12% in meno del mese scorso se continui così.",
-                  "motivationMessage": "Ottima gestione dei conti! Fai piccoli passi ogni giorno per costruire la tua sicurezza finanziaria."
-                }
-                """.trimIndent()
-            } else {
-                val request = GeminiRequest(
-                    contents = listOf(GeminiContent(parts = listOf(GeminiPart(text = prompt)))),
-                    generationConfig = GeminiGenerationConfig(
-                        responseMimeType = "application/json",
-                        temperature = 0.5f
-                    )
+            if (apiKey.isBlank() || apiKey == "MY_GEMINI_API_KEY" || apiKey == "YOUR_API_KEY_HERE") {
+                return@withContext Result.failure(
+                    IllegalStateException("AI Coach non configurato: nessuna analisi è stata generata.")
                 )
-                val response = apiService.generateContent(apiKey, request)
-                val rawText = response.candidates?.firstOrNull()?.content?.parts?.firstOrNull()?.text
-                rawText ?: throw Exception("Nessuna risposta ricevuta dall'IA.")
             }
+            val request = GeminiRequest(
+                contents = listOf(GeminiContent(parts = listOf(GeminiPart(text = prompt)))),
+                generationConfig = GeminiGenerationConfig(
+                    responseMimeType = "application/json", temperature = 0.5f
+                )
+            )
+            val response = apiService.generateContent(apiKey, request)
+            val jsonText = response.candidates?.firstOrNull()?.content?.parts?.firstOrNull()?.text
+                ?: throw IllegalStateException("Risposta AI assente. Nessuna analisi disponibile.")
 
             // 4. Token Estimation (Output)
             val outputTokens = jsonText.length / 4
@@ -133,27 +118,10 @@ class GeminiAiService(
     }
 
     private fun parseJsonResponse(jsonString: String): AiCoachResponse {
-        return try {
-            val cleanJson = jsonString.trim().removeSurrounding("```json", "```").trim()
-            val adapter = moshi.adapter(AiCoachResponse::class.java)
-            adapter.fromJson(cleanJson) ?: getFallbackResponse()
-        } catch (e: Exception) {
-            getFallbackResponse()
-        }
-    }
-
-    private fun getFallbackResponse(): AiCoachResponse {
-        return AiCoachResponse(
-            summary = "Analisi parziale delle spese completata con successo.",
-            topRiskCategory = "Spese non categorizzate",
-            savingTips = listOf(
-                "Traccia ogni spesa giornaliera per evitare uscite nascoste.",
-                "Fissa un budget giornaliero fisso per lo svago.",
-                "Imposta un piccolo risparmio automatico a inizio mese."
-            ),
-            budgetForecast = "Proiezione stabile. Mantieni il controllo quotidiano delle uscite.",
-            motivationMessage = "Ogni centesimo risparmiato oggi è un mattone per il tuo domani!"
-        )
+        val cleanJson = jsonString.trim().removeSurrounding("```json", "```").trim()
+        val adapter = moshi.adapter(AiCoachResponse::class.java)
+        return adapter.fromJson(cleanJson)
+            ?: throw IllegalStateException("Formato risposta AI non valido. Nessun risultato inventato.")
     }
 }
 

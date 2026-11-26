@@ -48,7 +48,7 @@ class FinanceViewModel(application: Application) : AndroidViewModel(application)
     init {
         val database = AppDatabase.getDatabase(application)
         val userSettingsStore = UserSettingsStore(application)
-        val firebaseAuthService = FirebaseAuthService()
+        val firebaseAuthService = FirebaseAuthService(application)
         val geminiAiService = GeminiAiService(database.aiUsageLogDao())
 
         val connectivityObserver = com.example.data.remote.NetworkConnectivityObserver(application)
@@ -58,6 +58,7 @@ class FinanceViewModel(application: Application) : AndroidViewModel(application)
 
         repository = FinanceRepository(
             transactionDao = database.transactionDao(),
+            accountDao = database.accountDao(),
             splitBillDao = database.splitBillDao(),
             budgetDao = database.budgetDao(),
             userSettingsStore = userSettingsStore,
@@ -127,7 +128,7 @@ class FinanceViewModel(application: Application) : AndroidViewModel(application)
             combine(currentUser, connectivityStatus, isAutoSyncEnabled) { user, status, autoSync ->
                 Triple(user, status, autoSync)
             }.collect { (user, status, autoSync) ->
-                if (user != null && status == com.example.data.remote.ConnectivityObserver.Status.Available && autoSync) {
+                if (user != null && user.provider != "local" && status == com.example.data.remote.ConnectivityObserver.Status.Available && autoSync) {
                     android.util.Log.d("FinanceViewModel", "Device is online & Auto-sync is enabled - initiating bidirectional sync for: ${user.displayName}")
                     repository.syncAllBidirectional(user.id)
                 }
@@ -256,9 +257,10 @@ class FinanceViewModel(application: Application) : AndroidViewModel(application)
 
     private fun autoSyncPending() {
         val user = currentUser.value
-        if (user != null && isAutoSyncEnabled.value) {
+        if (user != null && user.provider != "local" && isAutoSyncEnabled.value) {
             viewModelScope.launch {
-                repository.syncManager?.syncPending(user.id)
+                runCatching { repository.syncManager?.syncPending(user.id) }
+                    .onFailure { android.util.Log.e("FinanceViewModel", "Pending sync failed", it) }
             }
         }
     }
@@ -273,8 +275,12 @@ class FinanceViewModel(application: Application) : AndroidViewModel(application)
         paymentMethod: String,
         accountId: Int? = null
     ) {
+        if (accountId == null || accountId <= 0) {
+            android.widget.Toast.makeText(getApplication(), "Seleziona un conto reale per registrare il movimento.", android.widget.Toast.LENGTH_LONG).show()
+            return
+        }
         viewModelScope.launch {
-            repository.insertTransaction(
+            runCatching { repository.insertTransaction(
                 Transaction(
                     amount = amount,
                     type = type,
@@ -284,7 +290,10 @@ class FinanceViewModel(application: Application) : AndroidViewModel(application)
                     paymentMethod = paymentMethod,
                     accountId = accountId
                 )
-            )
+            ) }.onFailure {
+                android.widget.Toast.makeText(getApplication(), it.message ?: "Operazione non salvata", android.widget.Toast.LENGTH_LONG).show()
+                return@launch
+            }
             if (accountId != null) {
                 val db = AppDatabase.getDatabase(getApplication())
                 val account = db.accountDao().getAccountByIdSync(accountId)
@@ -396,6 +405,7 @@ class FinanceViewModel(application: Application) : AndroidViewModel(application)
     }
 
     fun togglePremiumStatus(isPremium: Boolean) {
+        if (isPremium) return // no active purchase verification provider
         viewModelScope.launch {
             repository.setPremiumStatus(isPremium)
             // Synchronize with PremiumManager

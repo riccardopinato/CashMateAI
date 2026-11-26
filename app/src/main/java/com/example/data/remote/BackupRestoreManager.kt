@@ -49,7 +49,7 @@ class BackupRestoreManager(
                     "syncStatus" to "SYNCED",
                     "lastSyncedAt" to System.currentTimeMillis()
                 )
-                firestoreService.uploadEntity(userId, "transactions", tx.id.toString(), map)
+                firestoreService.uploadEntity(userId, "transactions", tx.id.toString(), map).getOrThrow()
             }
 
             // 2. Accounts
@@ -73,7 +73,7 @@ class BackupRestoreManager(
                     "syncStatus" to "SYNCED",
                     "lastSyncedAt" to System.currentTimeMillis()
                 )
-                firestoreService.uploadEntity(userId, "accounts", acc.id.toString(), map)
+                firestoreService.uploadEntity(userId, "accounts", acc.id.toString(), map).getOrThrow()
             }
 
             // 3. Split Bills
@@ -93,7 +93,7 @@ class BackupRestoreManager(
                     "syncStatus" to "SYNCED",
                     "lastSyncedAt" to System.currentTimeMillis()
                 )
-                firestoreService.uploadEntity(userId, "splitBills", bill.id.toString(), map)
+                firestoreService.uploadEntity(userId, "splitBills", bill.id.toString(), map).getOrThrow()
             }
 
             // 4. Savings Goals
@@ -118,7 +118,7 @@ class BackupRestoreManager(
                     "syncStatus" to "SYNCED",
                     "lastSyncedAt" to System.currentTimeMillis()
                 )
-                firestoreService.uploadEntity(userId, "goals", goal.id.toString(), map)
+                firestoreService.uploadEntity(userId, "goals", goal.id.toString(), map).getOrThrow()
             }
 
             // Update local and cloud backup metadata

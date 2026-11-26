@@ -42,30 +42,20 @@ object PremiumManager {
     val expirationDate: StateFlow<String> = _expirationDate.asStateFlow()
 
     fun init(context: Context) {
-        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-        val planStr = prefs.getString(KEY_PLAN, PremiumPlan.FREE.name) ?: PremiumPlan.FREE.name
-        _currentPlan.value = try { PremiumPlan.valueOf(planStr) } catch (e: Exception) { PremiumPlan.FREE }
-        _expirationDate.value = prefs.getString(KEY_EXPIRATION, "Nessuna") ?: "Nessuna"
+        // Historical SharedPreferences may hold values set by demo buttons.
+        // Keep them untouched for forensic recovery, but do not grant paid access.
+        _currentPlan.value = PremiumPlan.FREE
+        _expirationDate.value = "Non verificata"
     }
 
     fun setPlan(context: Context, plan: PremiumPlan, expiration: String = "Nessuna") {
-        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-        val finalExp = when (plan) {
-            PremiumPlan.LIFETIME -> "Illimitata"
-            PremiumPlan.PREMIUM -> expiration.ifBlank { "04/07/2027" }
-            PremiumPlan.FREE -> "Nessuna"
-        }
-        prefs.edit()
-            .putString(KEY_PLAN, plan.name)
-            .putString(KEY_EXPIRATION, finalExp)
-            .apply()
-        _currentPlan.value = plan
-        _expirationDate.value = finalExp
+        // No Play Billing/RevenueCat verified entitlement exists in this snapshot.
+        // Explicitly refuse upgrades. Free is the only effective state.
+        _currentPlan.value = PremiumPlan.FREE
+        _expirationDate.value = "Non verificata"
     }
 
-    fun isPremiumActive(): Boolean {
-        return _currentPlan.value == PremiumPlan.PREMIUM || _currentPlan.value == PremiumPlan.LIFETIME
-    }
+    fun isPremiumActive(): Boolean = false
 
     /**
      * Centralized function to verify if a feature is accessible.

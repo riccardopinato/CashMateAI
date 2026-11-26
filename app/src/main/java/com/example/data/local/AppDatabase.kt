@@ -81,7 +81,7 @@ abstract class AppDatabase : RoomDatabase() {
                     AppDatabase::class.java,
                     "cashmate_database"
                 )
-                .fallbackToDestructiveMigration()
+                // No destructive fallback: older unknown schemas must fail safely until explicit migrations exist.
                 .build()
                 INSTANCE = instance
                 instance

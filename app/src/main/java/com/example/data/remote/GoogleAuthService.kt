@@ -12,26 +12,23 @@ import com.google.android.gms.tasks.Task
 class GoogleAuthService(private val context: Context) {
 
     private val googleSignInClient: GoogleSignInClient
+    private var configured: Boolean = false
 
     init {
-        // Find web_client_id from resources if present, otherwise use a placeholder.
+        // A real OAuth client ID is required for cloud Google authentication.
         val resourceId = context.resources.getIdentifier("default_web_client_id", "string", context.packageName)
-        val webClientId = if (resourceId != 0) {
-            context.getString(resourceId)
-        } else {
-            // Standard client ID placeholder or from BuildConfig if provided
-            "103456789012-placeholder.apps.googleusercontent.com"
-        }
+        val webClientId = if (resourceId != 0) context.getString(resourceId) else ""
+        configured = webClientId.isNotBlank() && webClientId.endsWith(".apps.googleusercontent.com")
 
         val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-            .requestIdToken(webClientId)
             .requestEmail()
-            .build()
+        if (configured) gso.requestIdToken(webClientId)
 
-        googleSignInClient = GoogleSignIn.getClient(context, gso)
+        googleSignInClient = GoogleSignIn.getClient(context, gso.build())
     }
 
     fun getSignInIntent(): Intent {
+        check(configured) { "Google Sign-In non configurato. Scegli la modalità locale." }
         // Sign out from Google first so that the user is always prompted to choose an account
         googleSignInClient.signOut()
         return googleSignInClient.signInIntent

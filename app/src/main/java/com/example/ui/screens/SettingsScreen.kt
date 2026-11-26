@@ -411,10 +411,9 @@ fun SettingsScreen(
 
                         OutlinedButton(
                             onClick = {
-                                PremiumManager.setPlan(context, PremiumPlan.PREMIUM, "04/07/2027")
-                                viewModel.togglePremiumStatus(true)
-                                Toast.makeText(context, "Acquisti ripristinati correttamente!", Toast.LENGTH_SHORT).show()
+                                Toast.makeText(context, "Ripristino acquisti non configurato.", Toast.LENGTH_SHORT).show()
                             },
+                            enabled = false,
                             border = BorderStroke(1.dp, Color.White.copy(alpha = 0.1f)),
                             shape = RoundedCornerShape(12.dp),
                             modifier = Modifier.weight(1f).testTag("settings_restore_purchases_button")
@@ -844,7 +843,8 @@ fun SettingsScreen(
                         // Switches actual premium state binded with VM!
                         Switch(
                             checked = isPremium,
-                            onCheckedChange = { viewModel.togglePremiumStatus(it) },
+                            onCheckedChange = { /* Premium entitlement is read-only until billing is verified. */ },
+                            enabled = false,
                             colors = SwitchDefaults.colors(
                                 checkedThumbColor = Color.Black,
                                 checkedTrackColor = EmeraldPrimary,

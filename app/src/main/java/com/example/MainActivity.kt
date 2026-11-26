@@ -14,7 +14,6 @@ import com.example.ui.theme.MyApplicationTheme
 import com.example.ui.viewmodel.FinanceViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.google.firebase.FirebaseApp
-import com.google.firebase.FirebaseOptions
 import android.util.Log
 
 class MainActivity : ComponentActivity() {
@@ -37,36 +36,17 @@ class MainActivity : ComponentActivity() {
   }
 
   private fun initializeFirebase() {
-    val googleAppIdId = resources.getIdentifier("google_app_id", "string", packageName)
-    if (googleAppIdId == 0) {
-      Log.w("MainActivity", "google-services.json is missing. Initializing Firebase with local fallback options.")
-      setupFallbackFirebase()
-    } else {
-      try {
-        val defaultApp = FirebaseApp.initializeApp(this)
-        if (defaultApp == null) {
-          setupFallbackFirebase()
-        } else {
-          Log.i("MainActivity", "Firebase initialized successfully with default resource options.")
-        }
-      } catch (e: Exception) {
-        Log.w("MainActivity", "Exception during default Firebase initialization. Trying fallback setup.", e)
-        setupFallbackFirebase()
-      }
+    // Cloud is opt-in and only available with genuine Google Services resources.
+    val resourceId = resources.getIdentifier("google_app_id", "string", packageName)
+    if (resourceId == 0) {
+      Log.i("MainActivity", "Cloud not configured. Local-only mode is available.")
+      return
     }
-  }
-
-  private fun setupFallbackFirebase() {
     try {
-      val options = FirebaseOptions.Builder()
-        .setApplicationId("1:1234567890:android:abcdef123456")
-        .setApiKey("AIzaSyDummyApiKeyForLocalFallbackOnly")
-        .setProjectId("cashmate-fallback-project")
-        .build()
-      FirebaseApp.initializeApp(this, options)
-      Log.i("MainActivity", "Firebase successfully initialized with fallback local options.")
+      val app = FirebaseApp.initializeApp(this)
+      if (app == null) Log.w("MainActivity", "Firebase configuration incomplete; cloud disabled.")
     } catch (e: Exception) {
-      Log.e("MainActivity", "Critical: Failed to initialize fallback Firebase.", e)
+      Log.w("MainActivity", "Firebase unavailable; cloud disabled.", e)
     }
   }
 }

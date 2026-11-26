@@ -14,3 +14,12 @@ The imported files are from the historic Android Kotlin/Compose project, **not**
 - Product README/ROADMAP/CHANGELOG statements reflect authoring history, not fresh compilation/device/release certification.
 
 This source snapshot is for auditable recovery. **Do not merge into main until CI and privacy/security/migration gates pass.**
+
+## Gate P0 (26/11/2026, repair PR)
+- Debug build uses Android's standard generated debug signing. This is **not** a release signature, therefore it cannot prove upgrades from historical APKs.
+- Room v6 no longer has a destructive fallback. Previous unknown schema versions may fail to open until real, tested migration fixtures are provided; no data are silently erased by Room.
+- A persistent per-installation local identity is explicitly selected for offline use. A failed Google sign-in **never** creates a false Google/offline user. Cloud backup and sync are guarded by Firebase UID session checks.
+- Cloud uploads validate `Result` before tagging records SYNCED or reporting backup success.
+- AI Coach fails explicitly when API key/provider response is missing and cannot return simulated financial advice.
+- Premium remains FREE pending a verified billing provider, regardless of earlier in-app demo flags; old settings are preserved, not treated as purchases.
+- Product release still blocked on migration tests from real old APK and verified Firebase/Play billing configurations.

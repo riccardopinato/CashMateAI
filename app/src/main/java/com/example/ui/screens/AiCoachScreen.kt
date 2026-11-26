@@ -82,13 +82,12 @@ fun AiCoachScreen(
             confirmButton = {
                 Button(
                     onClick = {
-                        viewModel.togglePremiumStatus(true)
                         showUpgradeDialog = false
                         viewModel.clearAiCoachError()
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = EmeraldPrimary)
                 ) {
-                    Text("Passa a Premium (Gratis)", fontWeight = FontWeight.Bold, color = Color.Black)
+                    Text("Premium non disponibile", fontWeight = FontWeight.Bold, color = Color.Black)
                 }
             },
             dismissButton = {
@@ -165,13 +164,13 @@ fun AiCoachScreen(
                         Spacer(modifier = Modifier.width(12.dp))
                         Column {
                             Text(
-                                "Modalità Assistente Attiva",
+                                "AI Coach non configurato",
                                 fontSize = 13.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = Color.White
                             )
                             Text(
-                                "AI Coach è sincronizzato con i dati del database locale per darti indicazioni finanziarie ad alta precisione.",
+                                "Per ottenere un’analisi servono un servizio AI configurato e il tuo consenso. Nessuna risposta dimostrativa verrà presentata come reale.",
                                 fontSize = 11.sp,
                                 color = TextSecondary,
                                 lineHeight = 16.sp

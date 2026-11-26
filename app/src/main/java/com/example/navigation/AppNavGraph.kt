@@ -257,8 +257,8 @@ fun AppNavGraph(
                         navController.navigate(Screen.PremiumPaywall.route)
                     },
                     onUpgradeSuccess = {
-                        com.example.premium.PremiumManager.setPlan(viewModel.getApplication(), com.example.premium.PremiumPlan.PREMIUM)
-                        viewModel.togglePremiumStatus(true)
+                        // Billing is not integrated. Never activate Premium from UI callbacks.
+                        viewModel.dismissPremiumUpgradeSheet()
                     }
                 )
             }

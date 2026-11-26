@@ -62,72 +62,30 @@ fun LoginScreen(
     val launcher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.StartActivityForResult()
     ) { result ->
-        if (result.resultCode == Activity.RESULT_OK) {
+        if (result.resultCode != Activity.RESULT_OK) {
+            isLoading = false
+            errorMessage = "Accesso Google annullato. Puoi usare la modalità locale."
+        } else {
             isLoading = true
             googleAuthService.getSignInResult(result.data)
                 .onSuccess { account ->
-                    val idToken = account.idToken
-                    if (idToken != null) {
-                        val credential = com.google.firebase.auth.GoogleAuthProvider.getCredential(idToken, null)
+                    val token = account.idToken
+                    if (token.isNullOrBlank()) {
+                        isLoading = false
+                        errorMessage = "Google non configurato: token di accesso non disponibile."
+                    } else {
+                        val credential = com.google.firebase.auth.GoogleAuthProvider.getCredential(token, null)
                         viewModel.loginWithGoogle(
                             credential = credential,
-                            onSuccess = {
-                                isLoading = false
-                                onLoginSuccess()
-                            },
-                            onError = { err ->
-                                val userEmail = account.email ?: "utente@example.com"
-                                val userDisplayName = account.displayName ?: "Riccardo"
-                                viewModel.loginOfflineWithDetails(
-                                    email = userEmail,
-                                    displayName = userDisplayName,
-                                    onSuccess = {
-                                        isLoading = false
-                                        onLoginSuccess()
-                                    }
-                                )
-                            }
-                        )
-                    } else {
-                        // Fallback: Google account selected but ID Token unavailable. Use offline login with details.
-                        val userEmail = account.email ?: "utente@example.com"
-                        val userDisplayName = account.displayName ?: "Riccardo"
-                        viewModel.loginOfflineWithDetails(
-                            email = userEmail,
-                            displayName = userDisplayName,
-                            onSuccess = {
-                                isLoading = false
-                                onLoginSuccess()
-                            }
+                            onSuccess = { isLoading = false; onLoginSuccess() },
+                            onError = { message -> isLoading = false; errorMessage = message }
                         )
                     }
                 }
-                .onFailure { err ->
-                    // Fallback: Sign-in result failed. Log in offline with current user metadata email.
-                    val userEmail = "utente@example.com"
-                    val userDisplayName = "Riccardo"
-                    viewModel.loginOfflineWithDetails(
-                        email = userEmail,
-                        displayName = userDisplayName,
-                        onSuccess = {
-                            isLoading = false
-                            onLoginSuccess()
-                        }
-                    )
-                }
-        } else {
-            // Fallback: Launcher cancelled or failed. Log in offline with current user metadata email.
-            isLoading = true
-            val userEmail = "utente@example.com"
-            val userDisplayName = "Riccardo"
-            viewModel.loginOfflineWithDetails(
-                email = userEmail,
-                displayName = userDisplayName,
-                onSuccess = {
+                .onFailure { error ->
                     isLoading = false
-                    onLoginSuccess()
+                    errorMessage = error.message ?: "Accesso Google non riuscito."
                 }
-            )
         }
     }
 
@@ -299,8 +257,9 @@ fun LoginScreen(
 
                 OutlinedButton(
                     onClick = {
-                        val intent = googleAuthService.getSignInIntent()
-                        launcher.launch(intent)
+                        runCatching { googleAuthService.getSignInIntent() }
+                            .onSuccess { launcher.launch(it) }
+                            .onFailure { errorMessage = it.message ?: "Google non configurato." }
                     },
                     border = BorderStroke(1.dp, Color.White.copy(alpha = 0.1f)),
                     shape = RoundedCornerShape(14.dp),
@@ -357,7 +316,7 @@ fun LoginScreen(
                             tint = Color(0xFF00E676)
                         )
                         Text(
-                            text = "Accedi Offline (Modalità Demo)",
+                            text = "Continua sul dispositivo (offline)",
                             color = Color(0xFF00E676),
                             fontSize = 14.sp,
                             fontWeight = FontWeight.Bold
@@ -407,72 +366,30 @@ fun RegisterScreen(
     val launcher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.StartActivityForResult()
     ) { result ->
-        if (result.resultCode == Activity.RESULT_OK) {
+        if (result.resultCode != Activity.RESULT_OK) {
+            isLoading = false
+            errorMessage = "Accesso Google annullato. Puoi usare la modalità locale."
+        } else {
             isLoading = true
             googleAuthService.getSignInResult(result.data)
                 .onSuccess { account ->
-                    val idToken = account.idToken
-                    if (idToken != null) {
-                        val credential = com.google.firebase.auth.GoogleAuthProvider.getCredential(idToken, null)
+                    val token = account.idToken
+                    if (token.isNullOrBlank()) {
+                        isLoading = false
+                        errorMessage = "Google non configurato: token di accesso non disponibile."
+                    } else {
+                        val credential = com.google.firebase.auth.GoogleAuthProvider.getCredential(token, null)
                         viewModel.loginWithGoogle(
                             credential = credential,
-                            onSuccess = {
-                                isLoading = false
-                                onRegisterSuccess()
-                            },
-                            onError = { err ->
-                                val userEmail = account.email ?: "utente@example.com"
-                                val userDisplayName = account.displayName ?: "Riccardo"
-                                viewModel.loginOfflineWithDetails(
-                                    email = userEmail,
-                                    displayName = userDisplayName,
-                                    onSuccess = {
-                                        isLoading = false
-                                        onRegisterSuccess()
-                                    }
-                                )
-                            }
-                        )
-                    } else {
-                        // Fallback: Google account selected but ID Token unavailable. Use offline login with details.
-                        val userEmail = account.email ?: "utente@example.com"
-                        val userDisplayName = account.displayName ?: "Riccardo"
-                        viewModel.loginOfflineWithDetails(
-                            email = userEmail,
-                            displayName = userDisplayName,
-                            onSuccess = {
-                                isLoading = false
-                                onRegisterSuccess()
-                            }
+                            onSuccess = { isLoading = false; onRegisterSuccess() },
+                            onError = { message -> isLoading = false; errorMessage = message }
                         )
                     }
                 }
-                .onFailure { err ->
-                    // Fallback: Sign-in result failed. Log in offline with current user metadata email.
-                    val userEmail = "utente@example.com"
-                    val userDisplayName = "Riccardo"
-                    viewModel.loginOfflineWithDetails(
-                        email = userEmail,
-                        displayName = userDisplayName,
-                        onSuccess = {
-                            isLoading = false
-                            onRegisterSuccess()
-                        }
-                    )
-                }
-        } else {
-            // Fallback: Launcher cancelled or failed. Log in offline with current user metadata email.
-            isLoading = true
-            val userEmail = "utente@example.com"
-            val userDisplayName = "Riccardo"
-            viewModel.loginOfflineWithDetails(
-                email = userEmail,
-                displayName = userDisplayName,
-                onSuccess = {
+                .onFailure { error ->
                     isLoading = false
-                    onRegisterSuccess()
+                    errorMessage = error.message ?: "Accesso Google non riuscito."
                 }
-            )
         }
     }
 
@@ -676,8 +593,9 @@ fun RegisterScreen(
 
                 OutlinedButton(
                     onClick = {
-                        val intent = googleAuthService.getSignInIntent()
-                        launcher.launch(intent)
+                        runCatching { googleAuthService.getSignInIntent() }
+                            .onSuccess { launcher.launch(it) }
+                            .onFailure { errorMessage = it.message ?: "Google non configurato." }
                     },
                     border = BorderStroke(1.dp, Color.White.copy(alpha = 0.1f)),
                     shape = RoundedCornerShape(14.dp),
@@ -734,7 +652,7 @@ fun RegisterScreen(
                             tint = Color(0xFF00E676)
                         )
                         Text(
-                            text = "Accedi Offline (Modalità Demo)",
+                            text = "Continua sul dispositivo (offline)",
                             color = Color(0xFF00E676),
                             fontSize = 14.sp,
                             fontWeight = FontWeight.Bold

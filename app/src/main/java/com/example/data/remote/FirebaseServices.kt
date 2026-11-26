@@ -1,6 +1,8 @@
 package com.example.data.remote
 
 import android.util.Log
+import android.content.Context
+import java.util.UUID
 import com.example.domain.model.UserProfile
 import com.google.firebase.auth.AuthCredential
 import com.google.firebase.auth.FirebaseAuth
@@ -10,7 +12,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.tasks.await
 
-class FirebaseAuthService {
+class FirebaseAuthService(private val context: Context) {
     private val _currentUser = MutableStateFlow<UserProfile?>(null)
     val currentUser: StateFlow<UserProfile?> = _currentUser.asStateFlow()
 
@@ -40,20 +42,15 @@ class FirebaseAuthService {
                     _currentUser.value = profile
                 } else {
                     val currentProvider = _currentUser.value?.provider
-                    if (currentProvider != "offline" && currentProvider != "google_offline") {
+                    if (currentProvider != "local") {
                         _currentUser.value = null
                     }
                 }
             }
         } catch (e: Exception) {
             Log.e("FirebaseAuthService", "Firebase initialization failed - falling back to offline", e)
-            // Seed a default mock/offline user to avoid app crashes when google-services is missing or in emulator
-            _currentUser.value = UserProfile(
-                id = "offline_user_id",
-                displayName = "Utente Offline",
-                email = "user@cashmate.ai",
-                provider = "offline"
-            )
+            // No silent login or fabricated account on startup.
+            _currentUser.value = null
         }
     }
 
@@ -86,30 +83,29 @@ class FirebaseAuthService {
     }
 
     fun loginOffline(): Result<UserProfile> {
+        // A per-installation local identity is genuine device state, not Google/Firebase auth.
+        val prefs = context.applicationContext.getSharedPreferences("cashmate_local_identity", Context.MODE_PRIVATE)
+        val id = prefs.getString("local_id", null) ?: UUID.randomUUID().toString().also {
+            prefs.edit().putString("local_id", it).apply()
+        }
+        val created = prefs.getLong("created_at", 0L).let { old ->
+            if (old > 0) old else System.currentTimeMillis().also { prefs.edit().putLong("created_at", it).apply() }
+        }
         val profile = UserProfile(
-            id = "offline_user_id",
-            displayName = "Utente Demo",
-            email = "demo@cashmate.ai",
-            provider = "offline",
-            createdAt = System.currentTimeMillis(),
-            updatedAt = System.currentTimeMillis()
+            id = "local_$id", displayName = "Il mio dispositivo", email = "",
+            provider = "local", createdAt = created, updatedAt = created
         )
         _currentUser.value = profile
         return Result.success(profile)
     }
 
-    fun loginOfflineWithDetails(email: String, displayName: String): Result<UserProfile> {
-        val userId = "google_offline_" + java.util.UUID.nameUUIDFromBytes(email.toByteArray()).toString()
-        val profile = UserProfile(
-            id = userId,
-            displayName = displayName,
-            email = email,
-            provider = "google_offline",
-            createdAt = System.currentTimeMillis(),
-            updatedAt = System.currentTimeMillis()
-        )
-        _currentUser.value = profile
-        return Result.success(profile)
+    /** A failed Google sign-in must never impersonate a Google user offline. */
+    fun loginOfflineWithDetails(email: String, displayName: String): Result<UserProfile> =
+        Result.failure(IllegalStateException("Accesso Google non riuscito. Usa esplicitamente la modalità locale."))
+
+    fun isCloudSession(userId: String): Boolean {
+        val provider = _currentUser.value?.provider
+        return provider != "local" && provider != null && auth?.currentUser?.uid == userId
     }
 
     suspend fun register(email: String, displayName: String, password: String): Result<UserProfile> {
@@ -182,6 +178,7 @@ class FirebaseAuthService {
     }
 
     suspend fun setPremiumStatus(isPremium: Boolean) {
+        if (isPremium) return // no verified billing provider is configured
         val current = _currentUser.value ?: return
         val updated = current.copy(
             isPremium = isPremium,
@@ -190,7 +187,7 @@ class FirebaseAuthService {
         )
         _currentUser.value = updated
         try {
-            firestoreService.uploadUserProfile(updated)
+            if (isCloudSession(updated.id)) firestoreService.uploadUserProfile(updated)
         } catch (e: Exception) {
             Log.e("FirebaseAuthService", "Failed to update premium on firestore", e)
         }
@@ -210,12 +207,12 @@ class FirestoreUserService {
 
 class FirestoreTransactionService {
     suspend fun syncTransactions(transactions: List<com.example.domain.model.Transaction>): Result<Unit> {
-        return Result.success(Unit)
+        return Result.failure(IllegalStateException("La sincronizzazione di transazioni non è implementata."))
     }
 }
 
 class FirestoreSplitBillService {
     suspend fun syncSplitBills(bills: List<com.example.domain.model.SplitBill>): Result<Unit> {
-        return Result.success(Unit)
+        return Result.failure(IllegalStateException("La sincronizzazione di spese condivise non è implementata."))
     }
 }
