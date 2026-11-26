@@ -1,0 +1,6 @@
+{
+  "name": "CashMate AI",
+  "description": "CashMate AI is a personal finance companion that tracks transactions, manages split bills, and provides AI-powered savings coach feedback based on monthly spending behavior.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
